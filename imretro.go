@@ -15,7 +15,7 @@ const WithPalette byte = 1 << 5
 
 // UnsupportedBitsError should be returned when an unexpected number
 // of bits is received.
-type UnsupportedBitsError int
+type UnsupportedBitsError byte
 
 // IsBitCountSupported checks if the bit count is supported by the imretro
 // format.
@@ -30,5 +30,5 @@ func IsBitCountSupported(count byte) bool {
 
 // Error converts to an error string.
 func (e UnsupportedBitsError) Error() string {
-	return fmt.Sprintf("Unsupported number of bits: %d", int(e))
+	return fmt.Sprintf("Unsupported bit count byte: %#b", byte(e))
 }
