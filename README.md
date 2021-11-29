@@ -23,7 +23,8 @@ The next two bits map to the "modes" that declare the bits-per-pixel. Following 
 32 bits for the dimensions: 16 for width and 16 for height. The reason for this limited
 range of dimensions is to be faithful to the retro-ish goal of this format.
 Next is the palette. First, a single bit: `0` for no palette, `1` to declare that a palette
-will be present in the file.
+will be present in the file. When no palette is present in the file, this means that the
+file decoder should choose its own default palette.
 
 The palette will declare the possible colors in the image. The number of colors in your
 palette depend on the number of bits you chose to use in your header. In 1-Bit mode, you
