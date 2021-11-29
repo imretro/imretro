@@ -3,7 +3,7 @@
 An image format for retro-style images
 
 I made this format so that you can make your own image with a hex editor for a retro-ish
-artstyle. In the future I may need to create an editor to allow making larger images.
+artstyle. In the future I may need to create an editor to allow making larger images easily.
 
 ## File
 
