@@ -7,9 +7,10 @@ artstyle. In the future I may need to create an editor to allow making larger im
 
 ## File
 
-### Endianness
+### Bit Order
 
-The file is little-endian, meaning that `0A 00` is 10 (`0x000A`), not 2560 (`0x0A00`).
+This file treats the first bit as the *least significant*, and the last as the *most significant*,
+meaning that `110` is 3 (`0b0011`), not 6 (`0b0110`).
 This is used so that any unused bit can simple be a trailing `0` instead of having to
 pad `0`s in front of the last bit in the final byte.
 
