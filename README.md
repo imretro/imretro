@@ -19,12 +19,18 @@ pad `0`s in front of the last bit in the final byte.
 
 Each file should start with a header to provide some information about the image.
 The first 7 *bytes* are `"IMRETRO"` (for a total of 56 bits). This is the file signature.
-The next two bits map to the "modes" that declare the bits-per-pixel. Following that are
-32 bits for the dimensions: 16 for width and 16 for height. The reason for this limited
+
+The next two bits map to the "modes" that declare the bits-per-pixel. After is a single bit
+for palette usage: `0` for no palette, `1` to declare that the file contains a palette. When
+no palette is present in the file, this means that the file decoder should choose its own
+default palette. The next 5 bits are unused.
+
+Following that are 32 bits for the dimensions: 16 for width and 16 for height. The reason for this limited
 range of dimensions is to be faithful to the retro-ish goal of this format.
-Next is the palette. First, a single bit: `0` for no palette, `1` to declare that a palette
-will be present in the file. When no palette is present in the file, this means that the
-file decoder should choose its own default palette.
+
+This results in 12 bytes for the header.
+
+#### Palette (Optional)
 
 The palette will declare the possible colors in the image. The number of colors in your
 palette depend on the number of bits you chose to use in your header. In 1-Bit mode, you
