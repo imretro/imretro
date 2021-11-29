@@ -7,13 +7,6 @@ artstyle. In the future I may need to create an editor to allow making larger im
 
 ## File
 
-### Bit Order
-
-This file treats the first bit as the *least significant*, and the last as the *most significant*,
-meaning that `110` is 3 (`0b0011`), not 6 (`0b0110`).
-This is used so that any unused bit can simple be a trailing `0` instead of having to
-pad `0`s in front of the last bit in the final byte.
-
 ### Contents
 
 #### Header
@@ -44,6 +37,13 @@ bytes.
 After the header comes the actual declaration of the pixels. The number of bits used in each
 pixel will depend on the "mode" you chose. Only 1 bit for each pixel in 1-Bit mode, 2 bits in
 2-Bit mode, etc. Each value for each pixel maps to a color in the palette.
+
+##### Bit Order
+
+The pixels section of the file treats the first bit as the *least significant*, and the last as the *most significant*,
+meaning that `110` is 3 (`0b0011`), not 6 (`0b0110`).
+This is used so that any unused bit can simple be a trailing `0` instead of having to
+pad `0`s in front of the last bit in the final byte.
 
 ### Modes
 
