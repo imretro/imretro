@@ -1,5 +1,7 @@
 # imretro
 
+[![codecov](https://codecov.io/gh/spenserblack/imretro/branch/master/graph/badge.svg?token=k8kLfJtxX0)](https://codecov.io/gh/spenserblack/imretro)
+
 An image format for retro-style images
 
 I made this format so that you can make your own image with a hex editor for a retro-ish
