@@ -20,10 +20,10 @@ editor to make sprites.
 Each file should start with a header to provide some information about the image.
 The first 7 *bytes* are `"IMRETRO"` (for a total of 56 bits). This is the file signature.
 
-The next two bits map to the "modes" that declare the bits-per-pixel. After is a single bit
-for palette usage: `0` for no palette, `1` to declare that the file contains a palette. When
-no palette is present in the file, this means that the file decoder should choose its own
-default palette. The next 5 bits are unused.
+The next two bits map to the "modes" that declare the bits-per-pixel. `00` for 1-bit, `01` for
+2-bit, and `10` for 8-bit. After is a single bit for palette usage: `0` for no palette, `1` to
+declare that the file contains a palette. When no palette is present in the file, this means that
+the file decoder should choose its own default palette. The next 5 bits are unused.
 
 Following that are 32 bits for the dimensions: 16 for width and 16 for height. The reason for this limited
 range of dimensions is to be faithful to the retro-ish goal of this format.
@@ -46,8 +46,8 @@ pixel will depend on the "mode" you chose. Only 1 bit for each pixel in 1-Bit mo
 
 ##### Bit Order
 
-The pixels section of the file treats the first bit as the *least significant*, and the last as the *most significant*,
-meaning that `110` is 3 (`0b0011`), not 6 (`0b0110`).
+The pixels section of the file treats the first bit as the *least significant*, and the last as the
+*most significant*, meaning that `110` is 3 (`0b0011`), not 6 (`0b0110`).
 This is used so that any unused bit can simple be a trailing `0` instead of having to
 pad `0`s in front of the last bit in the final byte.
 
