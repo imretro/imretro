@@ -1,7 +1,10 @@
 // Encode and decode retro-style images in the imretro format.
 package imretro
 
-import "fmt"
+import (
+	"fmt"
+	"image/color"
+)
 
 const (
 	OneBit byte = iota << 6
@@ -31,4 +34,17 @@ func IsBitCountSupported(count byte) bool {
 // Error converts to an error string.
 func (e UnsupportedBitsError) Error() string {
 	return fmt.Sprintf("Unsupported bit count byte: %#b", byte(e))
+}
+
+// ColorAsBytes converts a color to a 4-byte (one byte for each channel)
+// representation.
+func ColorAsBytes(c color.Color) (r, g, b, a byte) {
+	rchan, gchan, bchan, achan := c.RGBA()
+	return ChannelAsByte(rchan), ChannelAsByte(gchan), ChannelAsByte(bchan), ChannelAsByte(achan)
+}
+
+// ChannelAsByte converts a uint32 color channel ranging within [0, 0xFFFF] to
+// a byte.
+func ChannelAsByte(channel uint32) byte {
+	return byte(channel >> 8)
 }
