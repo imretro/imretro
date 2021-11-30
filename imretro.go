@@ -20,9 +20,6 @@ const WithPalette byte = 1 << 5
 // format.
 const MaximumDimension int = 0xFF_FF
 
-// Palette is a palette of colors.
-type Palette = color.Palette
-
 // UnsupportedBitsError should be returned when an unexpected number
 // of bits is received.
 type UnsupportedBitsError byte

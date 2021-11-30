@@ -10,9 +10,7 @@ import (
 // file.
 func TestEncode1BitHeader(t *testing.T) {
 	var b bytes.Buffer
-	m := image.NewRGBA(image.Rect(0, 0, 320, 240))
-
-	Encode(&b, m, OneBit)
+	Encode1Bit(t, &b)
 
 	wantHeader := []byte{'I', 'M', 'R', 'E', 'T', 'R', 'O', 0b001_00000}
 
@@ -34,6 +32,22 @@ func TestEncode1BitHeader(t *testing.T) {
 	FailDimensionHelper(t, &b, "y", "Least", 240)
 }
 
+// TestEncode1BitPalette checks that a black & white palette would be encoded
+// to a 1-bit imretro file.
+func TestEncode1BitPalette(t *testing.T) {
+	var b bytes.Buffer
+	Encode1Bit(t, &b)
+
+	t.Log("Skipping to palette")
+	b.Next(12)
+
+	channels := []string{"r", "g", "b", "a"}
+	for i, want := range []byte{0, 0, 0, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF} {
+		t.Logf(`Checking %s channel of color %d`, channels[i%4], i/4)
+		FailByteHelper(t, &b, want)
+	}
+}
+
 // FailDimensionHelper fails if the dimension is not the wanted value.
 func FailDimensionHelper(t *testing.T, b *bytes.Buffer, dimension, byteSignificance string, want byte) {
 	t.Helper()
@@ -50,4 +64,24 @@ func FailDimensionHelper(t *testing.T, b *bytes.Buffer, dimension, byteSignifica
 			want, want,
 		)
 	}
+}
+
+// FailByteHelper fails if the next byte does not match the wanted value.
+func FailByteHelper(t *testing.T, b *bytes.Buffer, want byte) {
+	t.Helper()
+	actual, err := b.ReadByte()
+	if err != nil {
+		panic(err)
+	}
+
+	if actual != want {
+		t.Errorf(`byte = %d (%b), want %d (%b)`, actual, actual, want, want)
+	}
+}
+
+// Encode1Bit creates a 1-bit image and encodes it to a buffer.
+func Encode1Bit(t *testing.T, b *bytes.Buffer) {
+	t.Helper()
+	m := image.NewRGBA(image.Rect(0, 0, 320, 240))
+	Encode(b, m, OneBit)
 }
