@@ -92,7 +92,7 @@ func FailDimensionHelper(t *testing.T, b *bytes.Buffer, dimension, byteSignifica
 
 	if actual != want {
 		t.Errorf(
-			`%s significant byte of %s dimension = %d (%b), want %d (%b)`,
+			`%s significant byte of %s dimension = %d (%08b), want %d (%08b)`,
 			byteSignificance, dimension,
 			actual, actual,
 			want, want,
@@ -109,7 +109,7 @@ func FailByteHelper(t *testing.T, b *bytes.Buffer, want byte) {
 	}
 
 	if actual != want {
-		t.Errorf(`byte = %d (%b), want %d (%b)`, actual, actual, want, want)
+		t.Errorf(`byte = %d (%08b), want %d (%08b)`, actual, actual, want, want)
 	}
 }
 
