@@ -6,9 +6,9 @@ import (
 	"testing"
 )
 
-// TestEncode1Bit checks that an image would be encoded to a 1-bit imretro
+// TestEncode1BitHeader checks that image info would be encoded to a 1-bit imretro
 // file.
-func TestEncode1Bit(t *testing.T) {
+func TestEncode1BitHeader(t *testing.T) {
 	var b bytes.Buffer
 	m := image.NewRGBA(image.Rect(0, 0, 320, 240))
 
