@@ -10,6 +10,8 @@
 # so that this can be a tool instead of an example
 printf "IMRETRO"
 
+# 1-bit mode (00), in-file palette (1), and trailing
+# 0s
 # 00 100 000
 printf "\040"
 
