@@ -16,9 +16,17 @@ const (
 // header.
 const WithPalette byte = 1 << 5
 
+// MaximumDimension is the maximum size of an image's boundary in the imretro
+// format.
+const MaximumDimension int = 0xFF_FF
+
 // UnsupportedBitsError should be returned when an unexpected number
 // of bits is received.
 type UnsupportedBitsError byte
+
+// DimensionsTooLargeError should be returned when an encoded image would
+// have boundaries that are not valid in the encoding.
+type DimensionsTooLargeError int
 
 // IsBitCountSupported checks if the bit count is supported by the imretro
 // format.
@@ -34,6 +42,11 @@ func IsBitCountSupported(count byte) bool {
 // Error converts to an error string.
 func (e UnsupportedBitsError) Error() string {
 	return fmt.Sprintf("Unsupported bit count byte: %#b", byte(e))
+}
+
+// Error makes a string representation of the too-large error.
+func (e DimensionsTooLargeError) Error() string {
+	return fmt.Sprintf("Dimensions too large for 16-bit number: %d", int(e))
 }
 
 // ColorAsBytes converts a color to a 4-byte (one byte for each channel)
