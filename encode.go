@@ -13,7 +13,7 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 	w.Write([]byte{bits | WithPalette})
 
 	bounds := m.Bounds()
-	width, height := bounds.Max.X-bounds.Min.X, bounds.Max.Y-bounds.Min.Y
+	width, height := bounds.Dx(), bounds.Dy()
 
 	for _, d := range []int{width, height} {
 		if d > MaximumDimension {
@@ -43,7 +43,36 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 	if err := writeColor(w, White); err != nil {
 		return err
 	}
-	return errors.New("Not implemented")
+
+	// NOTE Write the pixels
+	bounds := m.Bounds()
+	buffer := make(
+		[]byte,
+		0,
+		((bounds.Dx())*(bounds.Dy()))/8,
+	)
+	bitIndex := -1
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			if bitIndex < 0 {
+				// NOTE Index starts from *left* (most significant bit)
+				bitIndex = 7
+				// NOTE Next byte is being written
+				buffer = append(buffer, 0)
+			}
+			c := m.At(x, y)
+			r, g, b, a := ColorAsBytes(c)
+			// NOTE If at least 1 color is bright and not transparent, it is bright
+			brightness := r | g | b
+			isBright := (brightness > 128) && (a > 128)
+			if isBright {
+				buffer[len(buffer)-1] |= 1 << bitIndex
+			}
+			bitIndex--
+		}
+	}
+	w.Write(buffer)
+	return nil
 }
 
 func encodeTwoBit(w io.Writer, m image.Image) error {
