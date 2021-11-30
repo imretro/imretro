@@ -69,4 +69,11 @@ Black, white, and two shades of gray.
 54 colors. The remaining unused colors all mapping to alpha.
 The palette can be viewed [here][NES palette].
 
+## Development
+
+### "Hand-Writing" an Image File
+
+[This example script](./tools/print-image-example) can help you get started writing images.
+It is a good idea to become familiar with octal notation before looking at the script.
+
 [NES Palette]: https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NES

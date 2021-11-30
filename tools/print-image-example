@@ -1,0 +1,32 @@
+#!/bin/bash
+# This creates an imretro file for an image that
+# is 3 pixels wide, 4 pixels tall, uses 1-bit-pixel
+# mode, an in-file palette, and an alternating black &
+# white checkerboard pattern.
+#
+# Redirect STDOUT to file to write image file
+#
+# TODO Take width, height, and bit mode as variables
+# so that this can be a tool instead of an example
+printf "IMRETRO"
+
+# 00 100 000
+printf "\040"
+
+# 3 wide, 4 tall
+printf "\000\003"
+printf "\000\004"
+
+# Black & White palette
+printf "\000\000\000\377"
+printf "\377\377\377\377"
+
+# Pixels
+# For checkerboard pattern
+# 010
+# 101
+# 010
+# 101 (0000)
+# Which is 1 full byte and one half-byte (which requires 4 trailing 0s)
+printf "\125"
+printf "\120"
