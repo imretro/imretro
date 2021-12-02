@@ -9,6 +9,10 @@ import (
 // ImretroSignature is the "magic string" used for identifying an imretro file.
 const ImretroSignature = "IMRETRO"
 
+// BitsPerPixelIndex is the position of the two bits for the bits-per-pixel
+// mode (7 is left-most).
+const bitsPerPixelIndex byte = 6
+
 // DecodeError is an error signifying that something unexpected happened when
 // decoding the imretro reader.
 type DecodeError string
@@ -16,23 +20,37 @@ type DecodeError string
 // DecodeConfig returns the color model and dimensions of an imretro image
 // without decoding the entire image.
 func DecodeConfig(r io.Reader) (image.Config, error) {
+	var buff []byte
+	var err error
+
+	buff = make([]byte, len(ImretroSignature)+1)
+	mode, err := checkSignature(r, buff)
+	if err != nil {
+		return image.Config{}, err
+	}
+
+	bitsPerPixel := mode & (0b11 << bitsPerPixelIndex)
+	hasPalette := mode&WithPalette != 0
+
+	_, _ = bitsPerPixel, hasPalette
+
 	return image.Config{}, errors.New("Not implemented")
 }
 
-// CheckSignature confirms the reader is an imretro image by checking the "magic string".
-func checkSignature(r io.Reader) error {
-	buff := make([]byte, len(ImretroSignature))
-	_, err := io.ReadFull(r, buff)
+// CheckSignature confirms the reader is an imretro image by checking the "magic bytes",
+// and returns the "mode".
+func checkSignature(r io.Reader, buff []byte) (mode byte, err error) {
+	_, err = io.ReadFull(r, buff)
 	if err != nil {
-		return err
+		return
 	}
 
-	for i, b := range buff {
+	for i, b := range buff[:len(buff)-1] {
 		if b != ImretroSignature[i] {
-			return DecodeError("unexpected signature byte")
+			return mode, DecodeError("unexpected signature byte")
 		}
 	}
-	return nil
+	return buff[len(buff)-1], nil
 }
 
 // Error reports that the format could not be decoded as imretro.
