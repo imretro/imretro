@@ -8,10 +8,16 @@ type Palette = color.Palette
 // PaletteMap maps a pixel bit-count to a palette.
 type PaletteMap = map[byte]Palette
 
-// EncodingPalettes maps a byte for the pixel bit-count
-// to an appropriate default palette to keep the most
-// color accuracy possible when encoding an image.
-var EncodingPalettes PaletteMap
+var (
+	// DecodingPalettes maps a byte for the pixel bit-count
+	// to an appropriate default palette to be faithful to
+	// a "retro" style.
+	DecodingPalettes PaletteMap
+	// EncodingPalettes maps a byte for the pixel bit-count
+	// to an appropriate default palette to keep the most
+	// color accuracy possible when encoding an image.
+	EncodingPalettes PaletteMap
+)
 
 var (
 	Black color.Color = color.Gray{0}
@@ -31,7 +37,9 @@ var (
 )
 
 func init() {
+	DecodingPalettes = make(PaletteMap)
 	EncodingPalettes = make(PaletteMap)
 
+	DecodingPalettes[OneBit] = Palette{Black, White}
 	EncodingPalettes[OneBit] = Palette{Black, White}
 }
