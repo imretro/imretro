@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-// TestPassCheckSignature tests that a reader starting with "IMRETRO" bytes will
+// TestPassCheckHeader tests that a reader starting with "IMRETRO" bytes will
 // pass.
-func TestPassCheckSignature(t *testing.T) {
+func TestPassCheckHeader(t *testing.T) {
 	buff := make([]byte, 8)
 	r := Make1Bit(t)
-	mode, err := checkSignature(r, buff)
+	mode, err := checkHeader(r, buff)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
 	}
@@ -27,20 +27,20 @@ func TestPassCheckSignature(t *testing.T) {
 	}
 }
 
-// TestFailCheckSignature tests that a reader with unexpected magic bytes will
+// TestFailCheckHeader tests that a reader with unexpected magic bytes will
 // fail.
-func TestFailCheckSignature(t *testing.T) {
+func TestFailCheckHeader(t *testing.T) {
 	buff := make([]byte, 8)
 	partialSignature := "IMRET"
 	jpgSignature := "\xFF\xD8\xFF\xE0\x00\x10\x4A\x46\x49\x46\x00\x01"
 
 	partialr := bytes.NewBufferString(partialSignature)
-	if _, err := checkSignature(partialr, buff); err != io.ErrUnexpectedEOF {
+	if _, err := checkHeader(partialr, buff); err != io.ErrUnexpectedEOF {
 		t.Errorf(`err = %v, want %v`, err, io.ErrUnexpectedEOF)
 	}
 
 	jpgr := bytes.NewBufferString(jpgSignature)
-	if _, err := checkSignature(jpgr, buff); err != DecodeError("unexpected signature byte") {
+	if _, err := checkHeader(jpgr, buff); err != DecodeError("unexpected signature byte") {
 		t.Fatalf(`err = %v, want %v`, err, DecodeError("unexpected signature byte"))
 	}
 }

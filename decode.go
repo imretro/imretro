@@ -24,7 +24,7 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	var err error
 
 	buff = make([]byte, len(ImretroSignature)+1)
-	mode, err := checkSignature(r, buff)
+	mode, err := checkHeader(r, buff)
 	if err != nil {
 		return image.Config{}, err
 	}
@@ -37,9 +37,9 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	return image.Config{}, errors.New("Not implemented")
 }
 
-// CheckSignature confirms the reader is an imretro image by checking the "magic bytes",
+// CheckHeader confirms the reader is an imretro image by checking the "magic bytes",
 // and returns the "mode".
-func checkSignature(r io.Reader, buff []byte) (mode byte, err error) {
+func checkHeader(r io.Reader, buff []byte) (mode byte, err error) {
 	_, err = io.ReadFull(r, buff)
 	if err != nil {
 		return
