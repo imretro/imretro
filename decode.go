@@ -3,6 +3,7 @@ package imretro
 import (
 	"errors"
 	"image"
+	"image/color"
 	"io"
 )
 
@@ -32,9 +33,31 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	bitsPerPixel := mode & (0b11 << bitsPerPixelIndex)
 	hasPalette := mode&WithPalette != 0
 
-	_, _ = bitsPerPixel, hasPalette
+	buff = make([]byte, 4)
+	_, err = io.ReadFull(r, buff)
+	if err != nil {
+		return image.Config{}, err
+	}
 
-	return image.Config{}, errors.New("Not implemented")
+	width := (uint16(buff[0]) << 8) | uint16(buff[1])
+	height := (uint16(buff[2]) << 8) | uint16(buff[3])
+
+	var model color.Model
+	switch bitsPerPixel {
+	case OneBit:
+		model, err = decode1bit(r, hasPalette)
+	default:
+		err = errors.New("Not implemented")
+	}
+
+	return image.Config{model, int(width), int(height)}, err
+}
+
+func decode1bit(r io.Reader, hasPalette bool) (color.Model, error) {
+	if !hasPalette {
+		return Default1BitColorModel, nil
+	}
+	return nil, errors.New("Not implemented")
 }
 
 // CheckHeader confirms the reader is an imretro image by checking the "magic bytes",

@@ -2,6 +2,7 @@ package imretro
 
 import (
 	"bytes"
+	"image/color"
 	"io"
 	"testing"
 )
@@ -10,7 +11,7 @@ import (
 // pass.
 func TestPassCheckHeader(t *testing.T) {
 	buff := make([]byte, 8)
-	r := Make1Bit(t)
+	r := Make1Bit(t, 0b1010_0000, nil, 0, 0, nil)
 	mode, err := checkHeader(r, buff)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -45,13 +46,75 @@ func TestFailCheckHeader(t *testing.T) {
 	}
 }
 
+// TestDecode1BitNoPalette tests that a 1-bit-mode image with no palette can be decoded.
+func TestDecode1BitNoPalette(t *testing.T) {
+	const width, height int = 320, 240
+	var pixels = make([]byte, width*height)
+	r := Make1Bit(t, 0x00, [][]byte{}, uint16(320), uint16(240), pixels)
+
+	config, err := DecodeConfig(r)
+
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+	if config.Width != width {
+		t.Errorf(`Width = %v, want %v`, config.Width, width)
+	}
+	if config.Height != height {
+		t.Errorf(`Height = %v, want %v`, config.Height, height)
+	}
+	if _, ok := config.ColorModel.(OneBitColorModel); !ok {
+		t.Fatalf(`ColorModel is %T, want OneBitColorModel`, config.ColorModel)
+	}
+
+	inputAndWant := [][2]color.Color{{DarkGray, Black}, {LightGray, White}}
+
+	for _, colors := range inputAndWant {
+		input := colors[0]
+		want := colors[1]
+
+		r, g, b, a := config.ColorModel.Convert(input).RGBA()
+		wr, wg, wb, wa := want.RGBA()
+		comparisons := []channelComparison{
+			{"red", r, wr},
+			{"green", g, wg},
+			{"blue", b, wb},
+			{"alpha", a, wa},
+		}
+
+		for _, comparison := range comparisons {
+			if comparison.actual != comparison.want {
+				t.Errorf(
+					`Conversion of %v's %s channel = %v, want %v`,
+					input,
+					comparison.name,
+					comparison.actual, comparison.want,
+				)
+			}
+		}
+	}
+}
+
 // Make1Bit makes a 1-bit imretro reader.
-func Make1Bit(t *testing.T) *bytes.Buffer {
+func Make1Bit(t *testing.T, mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
 	t.Helper()
-	return bytes.NewBuffer([]byte{
+	b := bytes.NewBuffer([]byte{
 		// signature/magic bytes
 		'I', 'M', 'R', 'E', 'T', 'R', 'O',
 		// Mode byte (8-bit, in-file palette)
-		0b1010_0000,
+		mode,
+		byte(width >> 8), byte(width & 0xFF),
+		byte(height >> 8), byte(height & 0xFF),
 	})
+	for _, color := range palette {
+		b.Write(color)
+	}
+	b.Write(pixels)
+	return b
+}
+
+// ChannelComparison is used to compare color channels.
+type channelComparison struct {
+	name         string
+	actual, want uint32
 }
