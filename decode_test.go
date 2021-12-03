@@ -95,6 +95,55 @@ func TestDecode1BitNoPalette(t *testing.T) {
 	}
 }
 
+// TestDecode1BitPalette tests that a 1-bit palette would be properly decoded.
+func TestDecode1BitPalette(t *testing.T) {
+	palette := [][]byte{
+		{0x00, 0xFF, 0x00, 0xFF},
+		{0xEF, 0xFF, 0x00, 0xFF},
+	}
+	r := Make1Bit(t, 0x20, palette, 2, 2, make([]byte, 1))
+
+	config, err := DecodeConfig(r)
+
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+
+	if _, ok := config.ColorModel.(OneBitColorModel); !ok {
+		t.Fatalf(`ColorModel is %T, want OneBitColorModel`, config.ColorModel)
+	}
+
+	inputAndWant := [][2]color.Color{
+		{Black, color.RGBA{0x00, 0xFF, 0x00, 0xFF}},
+		{White, color.RGBA{0xEF, 0xFF, 0x00, 0xFF}},
+	}
+
+	for _, colors := range inputAndWant {
+		input := colors[0]
+		want := colors[1]
+
+		r, g, b, a := config.ColorModel.Convert(input).RGBA()
+		wr, wg, wb, wa := want.RGBA()
+		comparisons := []channelComparison{
+			{"red", r, wr},
+			{"green", g, wg},
+			{"blue", b, wb},
+			{"alpha", a, wa},
+		}
+
+		for _, comparison := range comparisons {
+			if comparison.actual != comparison.want {
+				t.Errorf(
+					`Conversion of %v's %s channel = %v, want %v`,
+					input,
+					comparison.name,
+					comparison.actual, comparison.want,
+				)
+			}
+		}
+	}
+}
+
 // Make1Bit makes a 1-bit imretro reader.
 func Make1Bit(t *testing.T, mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
 	t.Helper()

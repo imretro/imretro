@@ -57,7 +57,14 @@ func decode1bit(r io.Reader, hasPalette bool) (color.Model, error) {
 	if !hasPalette {
 		return Default1BitColorModel, nil
 	}
-	return nil, errors.New("Not implemented")
+
+	buff := make([]byte, 8)
+	if _, err := io.ReadFull(r, buff); err != nil {
+		return nil, err
+	}
+	model := NewOneBitColorModel(ColorFromBytes(buff[:4]), ColorFromBytes(buff[4:]))
+
+	return model, nil
 }
 
 // CheckHeader confirms the reader is an imretro image by checking the "magic bytes",
