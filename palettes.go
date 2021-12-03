@@ -36,6 +36,35 @@ var (
 	White       = color.Gray{255}
 )
 
+var (
+	Default1BitColorModel = NewOneBitColorModel(Black, White)
+)
+
+// OneBitColorModel is color model for 1-bit-pixel images.
+type OneBitColorModel struct {
+	colors Palette
+}
+
+// NewOneBitColorModel creates a new color model for 1-bit-pixel images.
+func NewOneBitColorModel(black color.Color, white color.Color) OneBitColorModel {
+	return OneBitColorModel{Palette{black, white}}
+}
+
+func (model OneBitColorModel) Convert(c color.Color) color.Color {
+	return model.colors[int(model.Bit(c))]
+}
+
+// Bit gets the bit that should point to the color index.
+func (model OneBitColorModel) Bit(c color.Color) byte {
+	r, g, b, a := ColorAsBytes(c)
+	brightness := r | g | b
+	isBright := (brightness >= 128) && (a >= 128)
+	if isBright {
+		return 1
+	}
+	return 0
+}
+
 func init() {
 	DecodingPalettes = make(PaletteMap)
 	EncodingPalettes = make(PaletteMap)

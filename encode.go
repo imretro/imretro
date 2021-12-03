@@ -61,13 +61,7 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 				buffer = append(buffer, 0)
 			}
 			c := m.At(x, y)
-			r, g, b, a := ColorAsBytes(c)
-			// NOTE If at least 1 color is bright and not transparent, it is bright
-			brightness := r | g | b
-			isBright := (brightness > 128) && (a > 128)
-			if isBright {
-				buffer[len(buffer)-1] |= 1 << bitIndex
-			}
+			buffer[len(buffer)-1] |= Default1BitColorModel.Bit(c) << bitIndex
 			bitIndex--
 		}
 	}
