@@ -73,25 +73,9 @@ func TestDecode1BitNoPalette(t *testing.T) {
 		input := colors[0]
 		want := colors[1]
 
-		r, g, b, a := config.ColorModel.Convert(input).RGBA()
-		wr, wg, wb, wa := want.RGBA()
-		comparisons := []channelComparison{
-			{"red", r, wr},
-			{"green", g, wg},
-			{"blue", b, wb},
-			{"alpha", a, wa},
-		}
-
-		for _, comparison := range comparisons {
-			if comparison.actual != comparison.want {
-				t.Errorf(
-					`Conversion of %v's %s channel = %v, want %v`,
-					input,
-					comparison.name,
-					comparison.actual, comparison.want,
-				)
-			}
-		}
+		t.Logf(`Comparing conversion of %v`, input)
+		actual := config.ColorModel.Convert(input)
+		CompareColors(t, actual, want)
 	}
 }
 
@@ -122,25 +106,9 @@ func TestDecode1BitPalette(t *testing.T) {
 		input := colors[0]
 		want := colors[1]
 
-		r, g, b, a := config.ColorModel.Convert(input).RGBA()
-		wr, wg, wb, wa := want.RGBA()
-		comparisons := []channelComparison{
-			{"red", r, wr},
-			{"green", g, wg},
-			{"blue", b, wb},
-			{"alpha", a, wa},
-		}
-
-		for _, comparison := range comparisons {
-			if comparison.actual != comparison.want {
-				t.Errorf(
-					`Conversion of %v's %s channel = %v, want %v`,
-					input,
-					comparison.name,
-					comparison.actual, comparison.want,
-				)
-			}
-		}
+		t.Logf(`Comparing conversion of %v`, input)
+		actual := config.ColorModel.Convert(input)
+		CompareColors(t, actual, want)
 	}
 }
 
@@ -160,6 +128,29 @@ func Make1Bit(t *testing.T, mode byte, palette [][]byte, width, height uint16, p
 	}
 	b.Write(pixels)
 	return b
+}
+
+// CompareColors helps compare colors to each other.
+func CompareColors(t *testing.T, actual, want color.Color) {
+	t.Helper()
+	r, g, b, a := actual.RGBA()
+	wr, wg, wb, wa := want.RGBA()
+	comparisons := [4]channelComparison{
+		{"red", r, wr},
+		{"green", g, wg},
+		{"blue", b, wb},
+		{"alpha", a, wa},
+	}
+
+	for _, comparison := range comparisons {
+		if comparison.actual != comparison.want {
+			t.Errorf(
+				`%s channel = %v, want %v`,
+				comparison.name, comparison.actual,
+				comparison.want,
+			)
+		}
+	}
 }
 
 // ChannelComparison is used to compare color channels.
