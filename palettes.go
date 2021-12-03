@@ -46,8 +46,8 @@ type OneBitColorModel struct {
 }
 
 // NewOneBitColorModel creates a new color model for 1-bit-pixel images.
-func NewOneBitColorModel(black color.Color, white color.Color) OneBitColorModel {
-	return OneBitColorModel{Palette{black, white}}
+func NewOneBitColorModel(off color.Color, on color.Color) OneBitColorModel {
+	return OneBitColorModel{Palette{off, on}}
 }
 
 func (model OneBitColorModel) Convert(c color.Color) color.Color {
