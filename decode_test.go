@@ -130,9 +130,11 @@ func TestDecode1BitImage(t *testing.T) {
 		{0, 1}, {4, 1}, 
 	}
 	for _, p := range blackPoints {
+		t.Logf(`Testing point %v`, p)
 		CompareColors(t, i.At(p.X, p.Y), Black)
 	}
 	for _, p := range whitePoints {
+		t.Logf(`Testing point %v`, p)
 		CompareColors(t, i.At(p.X, p.Y), White)
 	}
 	CompareColors(t, i.At(-1, -1), NoColor)
