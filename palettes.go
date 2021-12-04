@@ -1,12 +1,18 @@
 package imretro
 
-import "image/color"
+import (
+	"errors"
+	"image/color"
+)
 
 // Palette is a palette of colors.
 type Palette = color.Palette
 
 // PaletteMap maps a pixel bit-count to a palette.
 type PaletteMap = map[byte]Palette
+
+// ErrUnknownModel is raised when an unknown color model is interpreted.
+var ErrUnknownModel = errors.New("Color model not recognized")
 
 var (
 	// DecodingPalettes maps a byte for the pixel bit-count
@@ -43,6 +49,15 @@ var (
 // OneBitColorModel is color model for 1-bit-pixel images.
 type OneBitColorModel struct {
 	colors Palette
+}
+
+// ModelBitMode gets the bits-per-pixel according to the color model.
+func ModelBitMode(model color.Model) (byte, error) {
+	switch model.(type) {
+	case OneBitColorModel:
+		return OneBit, nil
+	}
+	return 0, ErrUnknownModel
 }
 
 // NewOneBitColorModel creates a new color model for 1-bit-pixel images.
