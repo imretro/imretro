@@ -26,7 +26,9 @@ var (
 )
 
 var (
-	Black color.Color = color.Gray{0}
+	// NoColor is "invisible" and signifies a lack of color.
+	NoColor color.Color = color.Alpha{0}
+	Black   color.Color = color.Gray{0}
 	// DarkerGray is 25% light.
 	DarkerGray = color.Gray{64}
 	// DarkGray is 33% light, and can be used for splitting a monochromatic

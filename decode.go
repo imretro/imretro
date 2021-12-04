@@ -18,6 +18,34 @@ const bitsPerPixelIndex byte = 6
 // decoding the imretro reader.
 type DecodeError string
 
+// Image1Bit is the underlying type for a 1-bit mode image.
+type image1Bit struct {
+	config image.Config
+	pixels []byte
+}
+
+// Decode decodes an image in the imretro format.
+func Decode(r io.Reader) (image.Image, error) {
+	config, err := DecodeConfig(r)
+	if err != nil {
+		return nil, err
+	}
+	mode, err := ModelBitMode(config.ColorModel)
+	if err != nil {
+		return nil, err
+	}
+	pixels, err := io.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+	switch mode {
+	case OneBit:
+		return &image1Bit{config, pixels}, nil
+	}
+	return nil, errors.New("Not implemented")
+}
+
 // DecodeConfig returns the color model and dimensions of an imretro image
 // without decoding the entire image.
 func DecodeConfig(r io.Reader) (image.Config, error) {
@@ -45,7 +73,7 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	var model color.Model
 	switch bitsPerPixel {
 	case OneBit:
-		model, err = decode1bit(r, hasPalette)
+		model, err = decode1bitModel(r, hasPalette)
 	default:
 		err = errors.New("Not implemented")
 	}
@@ -53,7 +81,7 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	return image.Config{model, int(width), int(height)}, err
 }
 
-func decode1bit(r io.Reader, hasPalette bool) (color.Model, error) {
+func decode1bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 	if !hasPalette {
 		return Default1BitColorModel, nil
 	}
@@ -86,4 +114,34 @@ func checkHeader(r io.Reader, buff []byte) (mode byte, err error) {
 // Error reports that the format could not be decoded as imretro.
 func (e DecodeError) Error() string {
 	return string(e)
+}
+
+// ColorModel returns the Image's color model.
+func (i *image1Bit) ColorModel() color.Model {
+	return i.config.ColorModel
+}
+
+// Bounds returns the boundaries of the image.
+func (i *image1Bit) Bounds() image.Rectangle {
+	return image.Rect(0, 0, i.config.Width, i.config.Height)
+}
+
+// At returns the color at the given pixel.
+func (i *image1Bit) At(x, y int) color.Color {
+	if !image.Pt(x, y).In(i.Bounds()) {
+		return NoColor
+	}
+	index := (y * i.config.Width) + x
+	byteIndex := index / 8
+	bitIndex := 7 - (index % 8)
+
+	if byteIndex > len(i.pixels) {
+		return NoColor
+	}
+
+	b := i.pixels[byteIndex]
+	bit := b & (1 << bitIndex)
+
+	model := i.ColorModel().(OneBitColorModel)
+	return model.colors[int(bit >> bitIndex)]
 }

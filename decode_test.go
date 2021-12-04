@@ -2,6 +2,7 @@ package imretro
 
 import (
 	"bytes"
+	"image"
 	"image/color"
 	"io"
 	"testing"
@@ -110,6 +111,34 @@ func TestDecode1BitPalette(t *testing.T) {
 		actual := config.ColorModel.Convert(input)
 		CompareColors(t, actual, want)
 	}
+}
+
+// TestDecode1BitImage tests that a 1-bit image would be properly decoded.
+func TestDecode1BitImage(t *testing.T) {
+	r := Make1Bit(t, 0x00, [][]byte{}, 5, 2, []byte{0b10010_100, 0b01_000000})
+	i, err := Decode(r)
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+
+	blackPoints := []image.Point{
+		{1, 0}, {2, 0}, {4, 0},
+		{1, 1}, {2, 1}, {3, 1},
+	}
+	whitePoints := []image.Point{
+		{0, 0}, {3, 0},
+		{0, 1}, {4, 1}, 
+	}
+	for _, p := range blackPoints {
+		CompareColors(t, i.At(p.X, p.Y), Black)
+	}
+	for _, p := range whitePoints {
+		CompareColors(t, i.At(p.X, p.Y), White)
+	}
+	CompareColors(t, i.At(-1, -1), NoColor)
+	CompareColors(t, i.At(5, 1), NoColor)
+	CompareColors(t, i.At(5, 2), NoColor)
+	CompareColors(t, i.At(10, 10), NoColor)
 }
 
 // Make1Bit makes a 1-bit imretro reader.
