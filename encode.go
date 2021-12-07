@@ -5,6 +5,8 @@ import (
 	"image"
 	"image/color"
 	"io"
+
+	"github.com/spenserblack/go-byteutils"
 )
 
 // Encode writes the image m to w in imretro format.
@@ -19,9 +21,7 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 		if d > MaximumDimension {
 			return DimensionsTooLargeError(d)
 		}
-		byte1 := IntLast8(d >> 8)
-		byte2 := IntLast8(d)
-		w.Write([]byte{byte1, byte2})
+		w.Write(byteutils.BytesFromUint16(uint16(d), byteutils.LittleEndian))
 	}
 
 	switch bits {
@@ -48,21 +48,22 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 	bounds := m.Bounds()
 	buffer := make(
 		[]byte,
-		0,
+		1,
 		((bounds.Dx())*(bounds.Dy()))/8,
 	)
-	bitIndex := -1
+	var bitIndex byte = 0
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
-			if bitIndex < 0 {
-				// NOTE Index starts from *left* (most significant bit)
-				bitIndex = 7
+			if bitIndex >= 8 {
+				bitIndex = 0
 				// NOTE Next byte is being written
 				buffer = append(buffer, 0)
 			}
 			c := m.At(x, y)
-			buffer[len(buffer)-1] |= Default1BitColorModel.Bit(c) << bitIndex
-			bitIndex--
+			// NOTE If at least 1 color is bright and not transparent, it is bright
+			bit := Default1BitColorModel.Bit(c)
+			byteutils.ChangeL(&buffer[len(buffer)-1], bitIndex, bit)
+			bitIndex++
 		}
 	}
 	w.Write(buffer)
