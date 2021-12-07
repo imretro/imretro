@@ -5,6 +5,8 @@ import (
 	"image"
 	"image/color"
 	"io"
+
+	"github.com/spenserblack/go-byteutils"
 )
 
 // ImretroSignature is the "magic string" used for identifying an imretro file.
@@ -59,7 +61,7 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	}
 
 	bitsPerPixel := mode & (0b11 << bitsPerPixelIndex)
-	hasPalette := mode&WithPalette != 0
+	hasPalette := byteutils.BitAsBool(byteutils.GetL(mode, PaletteIndex))
 
 	buff = make([]byte, 4)
 	_, err = io.ReadFull(r, buff)
@@ -67,8 +69,8 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 		return image.Config{}, err
 	}
 
-	width := (uint16(buff[0]) << 8) | uint16(buff[1])
-	height := (uint16(buff[2]) << 8) | uint16(buff[3])
+	width := byteutils.ToUint16(buff[0:2], byteutils.LittleEndian)
+	height := byteutils.ToUint16(buff[2:4], byteutils.LittleEndian)
 
 	var model color.Model
 	switch bitsPerPixel {
@@ -133,15 +135,15 @@ func (i *image1Bit) At(x, y int) color.Color {
 	}
 	index := (y * i.config.Width) + x
 	byteIndex := index / 8
-	bitIndex := 7 - (index % 8)
+	bitIndex := byte(index % 8)
 
 	if byteIndex > len(i.pixels) {
 		return NoColor
 	}
 
 	b := i.pixels[byteIndex]
-	bit := b & (1 << bitIndex)
+	bit := byteutils.GetL(b, bitIndex)
 
 	model := i.ColorModel().(OneBitColorModel)
-	return model.colors[int(bit >> bitIndex)]
+	return model.colors[int(bit)]
 }

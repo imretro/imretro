@@ -12,9 +12,13 @@ const (
 	EightBit
 )
 
+// PaletteIndex is the "index" (from the left) of the bit in the mode byte that
+// signifies if there is an in-file palette.
+const PaletteIndex byte = 2
+
 // WithPalette can be used with a union with the bit count when setting the
 // header.
-const WithPalette byte = 1 << 5
+const WithPalette byte = 1 << (7 - PaletteIndex)
 
 // MaximumDimension is the maximum size of an image's boundary in the imretro
 // format.
