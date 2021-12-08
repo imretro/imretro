@@ -12,9 +12,13 @@ const (
 	EightBit
 )
 
+// PaletteIndex is the "index" (from the left) of the bit in the mode byte that
+// signifies if there is an in-file palette.
+const PaletteIndex byte = 2
+
 // WithPalette can be used with a union with the bit count when setting the
 // header.
-const WithPalette byte = 1 << 5
+const WithPalette byte = 1 << (7 - PaletteIndex)
 
 // MaximumDimension is the maximum size of an image's boundary in the imretro
 // format.
@@ -54,6 +58,12 @@ func (e DimensionsTooLargeError) Error() string {
 func ColorAsBytes(c color.Color) (r, g, b, a byte) {
 	rchan, gchan, bchan, achan := c.RGBA()
 	return ChannelAsByte(rchan), ChannelAsByte(gchan), ChannelAsByte(bchan), ChannelAsByte(achan)
+}
+
+// ColorFromBytes converts 4 bytes into a color. Panics if the slice has less
+// than 4 bytes.
+func ColorFromBytes(bs []byte) color.Color {
+	return color.RGBA{bs[0], bs[1], bs[2], bs[3]}
 }
 
 // ChannelAsByte converts a uint32 color channel ranging within [0, 0xFFFF] to
