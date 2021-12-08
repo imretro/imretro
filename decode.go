@@ -147,3 +147,7 @@ func (i *image1Bit) At(x, y int) color.Color {
 	model := i.ColorModel().(OneBitColorModel)
 	return model.colors[int(bit)]
 }
+
+func init() {
+	image.RegisterFormat("imretro", ImretroSignature, Decode, DecodeConfig)
+}
