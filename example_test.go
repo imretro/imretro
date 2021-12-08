@@ -7,7 +7,7 @@ import (
 	"io"
 	"log"
 
-	_ "github.com/spenserblack/imretro" // register imretro format
+	_ "imretro" // register imretro format
 )
 
 // ImgBytes declares a 2x2 image with no in-file palette, 1 bit per pixel, and

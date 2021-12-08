@@ -1,4 +1,4 @@
-module github.com/spenserblack/imretro
+module imretro
 
 go 1.16
 
