@@ -104,6 +104,40 @@ func TestEncode1BitPixels(t *testing.T) {
 	}
 }
 
+// TestEncode2BitPixels checks that the pixels have been given the proper indices
+// to the palette.
+func TestEncode2BitPixels(t *testing.T) {
+	var b bytes.Buffer
+	Encode2Bit(t, &b, 10, 5)
+
+	t.Log("skipping to pixels")
+	b.Next(12)
+	b.Next(16)
+
+	for i := 0; i < 16/4; i++ {
+		FailByteHelper(t, &b, 0b00_01_10_11)
+	}
+
+	remaining := b.Bytes()
+
+	// NOTE 50 pixels, 4 pixels per byte results in 12 complete bytes (48 pixels)
+	// and 1 byte for the 2 remaining pixels (4 bits in the byte). Subtract 4 for
+	// bytes tested above.
+	if l, want := len(remaining), 9; l != want {
+		t.Fatalf(
+			`%d remaining pixel bytes (%d total pixel bytes), want %d`,
+			l, l+4,
+			want,
+		)
+	}
+
+	t.Logf(`Remaining bytes: %v`, remaining)
+
+	if final, want := remaining[len(remaining)-1], byte(0b0111_0000); final != want {
+		t.Errorf(`final byte = %d (%08b), want %d (%08b)`, final, final, want, want)
+	}
+}
+
 // FailDimensionHelper fails if the dimension is not the wanted value.
 func FailDimensionHelper(t *testing.T, b *bytes.Buffer, dimension, byteSignificance string, want byte) {
 	t.Helper()

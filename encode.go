@@ -61,6 +61,27 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 }
 
 func encodeTwoBit(w io.Writer, m image.Image) error {
+	// NOTE Write the pixels
+	bounds := m.Bounds()
+	buffer := make([]byte, 1, (bounds.Dx()*bounds.Dy())/4)
+	var bitIndex byte = 0
+
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			if bitIndex >= 8 {
+				bitIndex = 0
+				buffer = append(buffer, 0)
+			}
+			c := m.At(x, y)
+			bits := Default2BitColorModel.Bits(c)
+			buffer[len(buffer)-1] |= bits << (6 - bitIndex)
+			// NOTE Each index is 2 bits
+			bitIndex += 2
+		}
+	}
+	w.Write(buffer)
+	return nil
+
 	return errors.New("Not implemented")
 }
 
