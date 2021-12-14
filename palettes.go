@@ -8,22 +8,19 @@ import (
 // Palette is a palette of colors.
 type Palette = color.Palette
 
-// PaletteMap maps a pixel bit-count to a palette.
-type PaletteMap = map[byte]Palette
-
 // ErrUnknownModel is raised when an unknown color model is interpreted.
 var ErrUnknownModel = errors.New("Color model not recognized")
 
 var (
-	// DecodingPalettes maps a byte for the pixel bit-count
-	// to an appropriate default palette to be faithful to
-	// a "retro" style.
-	DecodingPalettes PaletteMap
-	// EncodingPalettes maps a byte for the pixel bit-count
-	// to an appropriate default palette to keep the most
-	// color accuracy possible when encoding an image.
-	EncodingPalettes PaletteMap
+	Default1BitPalette = Palette{Black, White}
+	Default2BitPalette = Palette{Black, DarkGray, LightGray, White}
 )
+
+// DefaultPaletteMap maps bit modes to the appropriate default palettes.
+var DefaultPaletteMap = map[byte]Palette{
+	OneBit: Default1BitPalette,
+	TwoBit: Default2BitPalette,
+}
 
 var (
 	// NoColor is "invisible" and signifies a lack of color.
@@ -80,12 +77,4 @@ func (model OneBitColorModel) Bit(c color.Color) byte {
 		return 1
 	}
 	return 0
-}
-
-func init() {
-	DecodingPalettes = make(PaletteMap)
-	EncodingPalettes = make(PaletteMap)
-
-	DecodingPalettes[OneBit] = Palette{Black, White}
-	EncodingPalettes[OneBit] = Palette{Black, White}
 }
