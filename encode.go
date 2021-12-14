@@ -71,6 +71,11 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 }
 
 func encodeTwoBit(w io.Writer, m image.Image) error {
+	for _, c := range []color.Color{Black, DarkGray, LightGray, White} {
+		if err := writeColor(w, c); err != nil {
+			return err
+		}
+	}
 	return errors.New("Not implemented")
 }
 
