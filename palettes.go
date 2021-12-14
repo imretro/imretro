@@ -30,18 +30,18 @@ var (
 	NoColor color.Color = color.Alpha{0}
 	Black   color.Color = color.Gray{0}
 	// DarkerGray is 25% light.
-	DarkerGray = color.Gray{64}
+	DarkerGray = color.Gray{0x40}
 	// DarkGray is 33% light, and can be used for splitting a monochromatic
 	// color range into 4 parts (0, 33%, 66%, 100%).
-	DarkGray = color.Gray{85}
+	DarkGray = color.Gray{0x55}
 	// MediumGray is the exact middle between black and white.
-	MediumGray = color.Gray{128}
+	MediumGray = color.Gray{0x80}
 	// LightGray is 66% light, and can be used for splitting a monochromatic
 	// color range into 4 parts (0, 33%, 66%, 100%).
-	LightGray = color.Gray{170}
+	LightGray = color.Gray{0xAA}
 	// LighterGray is 75% light.
-	LighterGray = color.Gray{192}
-	White       = color.Gray{255}
+	LighterGray = color.Gray{0xC0}
+	White       = color.Gray{0xFF}
 )
 
 var (
