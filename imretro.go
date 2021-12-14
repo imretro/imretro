@@ -24,9 +24,9 @@ const WithPalette byte = 1 << (7 - PaletteIndex)
 // format.
 const MaximumDimension int = 0xFF_FF
 
-// UnsupportedBitsError should be returned when an unexpected number
+// UnsupportedBitModeError should be returned when an unexpected number
 // of bits is received.
-type UnsupportedBitsError byte
+type UnsupportedBitModeError byte
 
 // DimensionsTooLargeError should be returned when an encoded image would
 // have boundaries that are not valid in the encoding.
@@ -44,7 +44,7 @@ func IsBitCountSupported(count byte) bool {
 }
 
 // Error converts to an error string.
-func (e UnsupportedBitsError) Error() string {
+func (e UnsupportedBitModeError) Error() string {
 	return fmt.Sprintf("Unsupported bit count byte: %#b", byte(e))
 }
 

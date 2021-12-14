@@ -10,9 +10,9 @@ import (
 )
 
 // Encode writes the image m to w in imretro format.
-func Encode(w io.Writer, m image.Image, bits byte) error {
+func Encode(w io.Writer, m image.Image, pixelMode byte) error {
 	w.Write([]byte("IMRETRO"))
-	w.Write([]byte{bits | WithPalette})
+	w.Write([]byte{pixelMode | WithPalette})
 
 	bounds := m.Bounds()
 	width, height := bounds.Dx(), bounds.Dy()
@@ -24,9 +24,9 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 		w.Write(byteutils.BytesFromUint16(uint16(d), byteutils.LittleEndian))
 	}
 
-	writePalette(w, DefaultPaletteMap[bits])
+	writePalette(w, DefaultPaletteMap[pixelMode])
 
-	switch bits {
+	switch pixelMode {
 	case OneBit:
 		return encodeOneBit(w, m)
 	case TwoBit:
@@ -34,7 +34,7 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 	case EightBit:
 		return encodeEightBit(w, m)
 	}
-	return UnsupportedBitsError(bits)
+	return UnsupportedBitModeError(pixelMode)
 }
 
 func encodeOneBit(w io.Writer, m image.Image) error {
