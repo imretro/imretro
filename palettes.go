@@ -43,10 +43,16 @@ var (
 
 var (
 	Default1BitColorModel = NewOneBitColorModel(Black, White)
+	Default2BitColorModel = NewTwoBitColorModel(Black, DarkGray, LightGray, White)
 )
 
 // OneBitColorModel is color model for 1-bit-pixel images.
 type OneBitColorModel struct {
+	colors Palette
+}
+
+// TwoBitColorModel is a color model for 2-bit-pixel images.
+type TwoBitColorModel struct {
 	colors Palette
 }
 
@@ -55,6 +61,8 @@ func ModelBitMode(model color.Model) (byte, error) {
 	switch model.(type) {
 	case OneBitColorModel:
 		return OneBit, nil
+	case TwoBitColorModel:
+		return TwoBit, nil
 	}
 	return 0, ErrUnknownModel
 }
@@ -77,4 +85,26 @@ func (model OneBitColorModel) Bit(c color.Color) byte {
 		return 1
 	}
 	return 0
+}
+
+// NewTwoBitColorModel creates a new color model for 2-bit-pixel images.
+func NewTwoBitColorModel(off, light, strong, full color.Color) TwoBitColorModel {
+	return TwoBitColorModel{Palette{off, light, strong, full}}
+}
+
+func (model TwoBitColorModel) Convert(c color.Color) color.Color {
+	return model.colors[int(model.Bits(c))]
+}
+
+// Bits gets the two bits that should point to the color index.
+//
+// Possible values are in range [0, 4).
+func (model TwoBitColorModel) Bits(c color.Color) byte {
+	r, g, b, a := ColorAsBytes(c)
+	// NOTE Return the "off" color if <50% opacity
+	if a < 0x80 {
+		return 0
+	}
+	// NOTE Two most significant bits of the combined colors.
+	return (r | g | b) >> 6
 }
