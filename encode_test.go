@@ -49,6 +49,28 @@ func TestEncode1BitPalette(t *testing.T) {
 	}
 }
 
+// TestEncode2BitPalette checks that black, white, and 2 shades of gray would
+// be encoded to a 2-bit imretro file.
+func TestEncode2BitPalette(t *testing.T) {
+	var b bytes.Buffer
+	Encode2Bit(t, &b, 320, 240)
+
+	t.Log("Skipping to palette")
+	b.Next(12)
+
+	channels := []string{"r", "g", "b", "a"}
+	bytes := []byte{
+		0, 0, 0, 0xFF,
+		0x55, 0x55, 0x55, 0xFF,
+		0xAA, 0xAA, 0xAA, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF,
+	}
+	for i, want := range bytes {
+		t.Logf(`Checking %s channel of color %d`, channels[i%4], i/4)
+		FailByteHelper(t, &b, want)
+	}
+}
+
 // TestEncode1BitPixels checks that the pixels have been given the proper indices
 // to the palette.
 func TestEncode1BitPixels(t *testing.T) {
@@ -78,6 +100,40 @@ func TestEncode1BitPixels(t *testing.T) {
 	t.Logf(`Remaining bytes: %v`, remaining)
 
 	if final, want := remaining[len(remaining)-1], byte(0b0100_0000); final != want {
+		t.Errorf(`final byte = %d (%08b), want %d (%08b)`, final, final, want, want)
+	}
+}
+
+// TestEncode2BitPixels checks that the pixels have been given the proper indices
+// to the palette.
+func TestEncode2BitPixels(t *testing.T) {
+	var b bytes.Buffer
+	Encode2Bit(t, &b, 10, 5)
+
+	t.Log("skipping to pixels")
+	b.Next(12)
+	b.Next(16)
+
+	for i := 0; i < 16/4; i++ {
+		FailByteHelper(t, &b, 0b00_01_10_11)
+	}
+
+	remaining := b.Bytes()
+
+	// NOTE 50 pixels, 4 pixels per byte results in 12 complete bytes (48 pixels)
+	// and 1 byte for the 2 remaining pixels (4 bits in the byte). Subtract 4 for
+	// bytes tested above.
+	if l, want := len(remaining), 9; l != want {
+		t.Fatalf(
+			`%d remaining pixel bytes (%d total pixel bytes), want %d`,
+			l, l+4,
+			want,
+		)
+	}
+
+	t.Logf(`Remaining bytes: %v`, remaining)
+
+	if final, want := remaining[len(remaining)-1], byte(0b0111_0000); final != want {
 		t.Errorf(`final byte = %d (%08b), want %d (%08b)`, final, final, want, want)
 	}
 }
@@ -136,4 +192,20 @@ func Encode1Bit(t *testing.T, b *bytes.Buffer, width, height int) {
 	m.Set(width-1, height-1, LighterGray)
 
 	Encode(b, m, OneBit)
+}
+
+// Encode2Bit creates a 2-bit image and encodes it to a buffer.
+func Encode2Bit(t *testing.T, b *bytes.Buffer, width, height int) {
+	t.Helper()
+	colors := []color.Color{Black, DarkGray, LightGray, White}
+
+	m := image.NewRGBA(image.Rect(0, 0, width, height))
+	for i := 0; i < 16; i++ {
+		c := colors[i%len(colors)]
+		m.Set(i%width, i/width, c)
+	}
+	m.Set(width-2, height-1, DarkerGray)
+	m.Set(width-1, height-1, LighterGray)
+
+	Encode(b, m, TwoBit)
 }

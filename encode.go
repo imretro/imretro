@@ -10,9 +10,9 @@ import (
 )
 
 // Encode writes the image m to w in imretro format.
-func Encode(w io.Writer, m image.Image, bits byte) error {
+func Encode(w io.Writer, m image.Image, pixelMode byte) error {
 	w.Write([]byte("IMRETRO"))
-	w.Write([]byte{bits | WithPalette})
+	w.Write([]byte{pixelMode | WithPalette})
 
 	bounds := m.Bounds()
 	width, height := bounds.Dx(), bounds.Dy()
@@ -24,7 +24,9 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 		w.Write(byteutils.BytesFromUint16(uint16(d), byteutils.LittleEndian))
 	}
 
-	switch bits {
+	writePalette(w, DefaultPaletteMap[pixelMode])
+
+	switch pixelMode {
 	case OneBit:
 		return encodeOneBit(w, m)
 	case TwoBit:
@@ -32,25 +34,13 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 	case EightBit:
 		return encodeEightBit(w, m)
 	}
-	return UnsupportedBitsError(bits)
+	return UnsupportedBitModeError(pixelMode)
 }
 
 func encodeOneBit(w io.Writer, m image.Image) error {
-	// NOTE Write the palette
-	if err := writeColor(w, Black); err != nil {
-		return err
-	}
-	if err := writeColor(w, White); err != nil {
-		return err
-	}
-
 	// NOTE Write the pixels
 	bounds := m.Bounds()
-	buffer := make(
-		[]byte,
-		1,
-		((bounds.Dx())*(bounds.Dy()))/8,
-	)
+	buffer := make([]byte, 1, (bounds.Dx()*bounds.Dy())/8)
 	var bitIndex byte = 0
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
@@ -71,6 +61,27 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 }
 
 func encodeTwoBit(w io.Writer, m image.Image) error {
+	// NOTE Write the pixels
+	bounds := m.Bounds()
+	buffer := make([]byte, 1, (bounds.Dx()*bounds.Dy())/4)
+	var bitIndex byte = 0
+
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			if bitIndex >= 8 {
+				bitIndex = 0
+				buffer = append(buffer, 0)
+			}
+			c := m.At(x, y)
+			bits := Default2BitColorModel.Bits(c)
+			buffer[len(buffer)-1] |= bits << (6 - bitIndex)
+			// NOTE Each index is 2 bits
+			bitIndex += 2
+		}
+	}
+	w.Write(buffer)
+	return nil
+
 	return errors.New("Not implemented")
 }
 
@@ -83,4 +94,15 @@ func writeColor(w io.Writer, c color.Color) error {
 	r, g, b, a := ColorAsBytes(c)
 	_, err := w.Write([]byte{r, g, b, a})
 	return err
+}
+
+// WritePalette writes all the colors of the palette, where each color is 4
+// bytes, to a Writer.
+func writePalette(w io.Writer, p Palette) error {
+	for _, c := range p {
+		if err := writeColor(w, c); err != nil {
+			return err
+		}
+	}
+	return nil
 }

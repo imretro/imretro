@@ -18,7 +18,7 @@ func TestIsBitCountSupported(t *testing.T) {
 
 // TestUnsupportedError tests the error message for unsupported number of bits error.
 func TestUnsupportedError(t *testing.T) {
-	if actual, want := UnsupportedBitsError(0b10).Error(), "Unsupported bit count byte: 0b10"; actual != want {
+	if actual, want := UnsupportedBitModeError(0b10).Error(), "Unsupported bit count byte: 0b10"; actual != want {
 		t.Fatalf(`err = %q, want %q`, actual, want)
 	}
 }

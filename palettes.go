@@ -8,48 +8,51 @@ import (
 // Palette is a palette of colors.
 type Palette = color.Palette
 
-// PaletteMap maps a pixel bit-count to a palette.
-type PaletteMap = map[byte]Palette
-
 // ErrUnknownModel is raised when an unknown color model is interpreted.
 var ErrUnknownModel = errors.New("Color model not recognized")
 
 var (
-	// DecodingPalettes maps a byte for the pixel bit-count
-	// to an appropriate default palette to be faithful to
-	// a "retro" style.
-	DecodingPalettes PaletteMap
-	// EncodingPalettes maps a byte for the pixel bit-count
-	// to an appropriate default palette to keep the most
-	// color accuracy possible when encoding an image.
-	EncodingPalettes PaletteMap
+	Default1BitPalette = Palette{Black, White}
+	Default2BitPalette = Palette{Black, DarkGray, LightGray, White}
 )
+
+// DefaultPaletteMap maps bit modes to the appropriate default palettes.
+var DefaultPaletteMap = map[byte]Palette{
+	OneBit: Default1BitPalette,
+	TwoBit: Default2BitPalette,
+}
 
 var (
 	// NoColor is "invisible" and signifies a lack of color.
 	NoColor color.Color = color.Alpha{0}
 	Black   color.Color = color.Gray{0}
 	// DarkerGray is 25% light.
-	DarkerGray = color.Gray{64}
+	DarkerGray = color.Gray{0x40}
 	// DarkGray is 33% light, and can be used for splitting a monochromatic
 	// color range into 4 parts (0, 33%, 66%, 100%).
-	DarkGray = color.Gray{85}
+	DarkGray = color.Gray{0x55}
 	// MediumGray is the exact middle between black and white.
-	MediumGray = color.Gray{128}
+	MediumGray = color.Gray{0x80}
 	// LightGray is 66% light, and can be used for splitting a monochromatic
 	// color range into 4 parts (0, 33%, 66%, 100%).
-	LightGray = color.Gray{170}
+	LightGray = color.Gray{0xAA}
 	// LighterGray is 75% light.
-	LighterGray = color.Gray{192}
-	White       = color.Gray{255}
+	LighterGray = color.Gray{0xC0}
+	White       = color.Gray{0xFF}
 )
 
 var (
 	Default1BitColorModel = NewOneBitColorModel(Black, White)
+	Default2BitColorModel = NewTwoBitColorModel(Black, DarkGray, LightGray, White)
 )
 
 // OneBitColorModel is color model for 1-bit-pixel images.
 type OneBitColorModel struct {
+	colors Palette
+}
+
+// TwoBitColorModel is a color model for 2-bit-pixel images.
+type TwoBitColorModel struct {
 	colors Palette
 }
 
@@ -58,6 +61,8 @@ func ModelBitMode(model color.Model) (byte, error) {
 	switch model.(type) {
 	case OneBitColorModel:
 		return OneBit, nil
+	case TwoBitColorModel:
+		return TwoBit, nil
 	}
 	return 0, ErrUnknownModel
 }
@@ -82,10 +87,24 @@ func (model OneBitColorModel) Bit(c color.Color) byte {
 	return 0
 }
 
-func init() {
-	DecodingPalettes = make(PaletteMap)
-	EncodingPalettes = make(PaletteMap)
+// NewTwoBitColorModel creates a new color model for 2-bit-pixel images.
+func NewTwoBitColorModel(off, light, strong, full color.Color) TwoBitColorModel {
+	return TwoBitColorModel{Palette{off, light, strong, full}}
+}
 
-	DecodingPalettes[OneBit] = Palette{Black, White}
-	EncodingPalettes[OneBit] = Palette{Black, White}
+func (model TwoBitColorModel) Convert(c color.Color) color.Color {
+	return model.colors[int(model.Bits(c))]
+}
+
+// Bits gets the two bits that should point to the color index.
+//
+// Possible values are in range [0, 4).
+func (model TwoBitColorModel) Bits(c color.Color) byte {
+	r, g, b, a := ColorAsBytes(c)
+	// NOTE Return the "off" color if <50% opacity
+	if a < 0x80 {
+		return 0
+	}
+	// NOTE Two most significant bits of the combined colors.
+	return (r | g | b) >> 6
 }
