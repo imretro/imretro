@@ -24,6 +24,8 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 		w.Write(byteutils.BytesFromUint16(uint16(d), byteutils.LittleEndian))
 	}
 
+	writePalette(w, DefaultPaletteMap[bits])
+
 	switch bits {
 	case OneBit:
 		return encodeOneBit(w, m)
@@ -36,14 +38,6 @@ func Encode(w io.Writer, m image.Image, bits byte) error {
 }
 
 func encodeOneBit(w io.Writer, m image.Image) error {
-	// NOTE Write the palette
-	if err := writeColor(w, Black); err != nil {
-		return err
-	}
-	if err := writeColor(w, White); err != nil {
-		return err
-	}
-
 	// NOTE Write the pixels
 	bounds := m.Bounds()
 	buffer := make(
@@ -71,11 +65,6 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 }
 
 func encodeTwoBit(w io.Writer, m image.Image) error {
-	for _, c := range []color.Color{Black, DarkGray, LightGray, White} {
-		if err := writeColor(w, c); err != nil {
-			return err
-		}
-	}
 	return errors.New("Not implemented")
 }
 
@@ -88,4 +77,15 @@ func writeColor(w io.Writer, c color.Color) error {
 	r, g, b, a := ColorAsBytes(c)
 	_, err := w.Write([]byte{r, g, b, a})
 	return err
+}
+
+// WritePalette writes all the colors of the palette, where each color is 4
+// bytes, to a Writer.
+func writePalette(w io.Writer, p Palette) error {
+	for _, c := range p {
+		if err := writeColor(w, c); err != nil {
+			return err
+		}
+	}
+	return nil
 }
