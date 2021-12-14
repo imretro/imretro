@@ -40,11 +40,7 @@ func Encode(w io.Writer, m image.Image, pixelMode byte) error {
 func encodeOneBit(w io.Writer, m image.Image) error {
 	// NOTE Write the pixels
 	bounds := m.Bounds()
-	buffer := make(
-		[]byte,
-		1,
-		((bounds.Dx())*(bounds.Dy()))/8,
-	)
+	buffer := make([]byte, 1, (bounds.Dx()*bounds.Dy())/8)
 	var bitIndex byte = 0
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
