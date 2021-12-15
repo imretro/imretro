@@ -12,7 +12,7 @@ import (
 // pass.
 func TestPassCheckHeader(t *testing.T) {
 	buff := make([]byte, 8)
-	r := Make1Bit(0b1010_0000, nil, 0, 0, nil)
+	r := MakeImretroReader(0b1010_0000, nil, 0, 0, nil)
 	mode, err := checkHeader(r, buff)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -51,7 +51,7 @@ func TestFailCheckHeader(t *testing.T) {
 func TestDecode1BitNoPalette(t *testing.T) {
 	const width, height int = 320, 240
 	var pixels = make([]byte, width*height)
-	r := Make1Bit(0x00, [][]byte{}, uint16(320), uint16(240), pixels)
+	r := MakeImretroReader(0x00, [][]byte{}, uint16(320), uint16(240), pixels)
 
 	config, err := DecodeConfig(r)
 
@@ -80,13 +80,51 @@ func TestDecode1BitNoPalette(t *testing.T) {
 	}
 }
 
+// TestDecode2BitNoPalette tests that a 2-bit-mode image with no palette can be decoded.
+func TestDecode2BitNoPalette(t *testing.T) {
+	const width, height int = 320, 240
+	var pixels = make([]byte, width*height)
+	r := MakeImretroReader(0x40, [][]byte{}, uint16(320), uint16(240), pixels)
+
+	config, err := DecodeConfig(r)
+
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+	if config.Width != width {
+		t.Errorf(`Width = %v, want %v`, config.Width, width)
+	}
+	if config.Height != height {
+		t.Errorf(`Height = %v, want %v`, config.Height, height)
+	}
+	if _, ok := config.ColorModel.(TwoBitColorModel); !ok {
+		t.Fatalf(`ColorModel is %T, want TwoBitColorModel`, config.ColorModel)
+	}
+
+	inputAndWant := [][2]color.Color{
+		{color.Gray{0x0F}, Black},
+		{DarkGray, DarkGray},
+		{LightGray, LightGray},
+		{color.Gray{0xF0}, White},
+	}
+
+	for _, colors := range inputAndWant {
+		input := colors[0]
+		want := colors[1]
+
+		t.Logf(`Comparing conversion of %v`, input)
+		actual := config.ColorModel.Convert(input)
+		CompareColors(t, actual, want)
+	}
+}
+
 // TestDecode1BitPalette tests that a 1-bit palette would be properly decoded.
 func TestDecode1BitPalette(t *testing.T) {
 	palette := [][]byte{
 		{0x00, 0xFF, 0x00, 0xFF},
 		{0xEF, 0xFF, 0x00, 0xFF},
 	}
-	r := Make1Bit(0x20, palette, 2, 2, make([]byte, 1))
+	r := MakeImretroReader(0x20, palette, 2, 2, make([]byte, 1))
 
 	config, err := DecodeConfig(r)
 
@@ -113,9 +151,46 @@ func TestDecode1BitPalette(t *testing.T) {
 	}
 }
 
+// TestDecode2BitPalette tests that a 2-bit palette would be properly decoded.
+func TestDecode2BitPalette(t *testing.T) {
+	palette := [][]byte{
+		{0xFF, 0x00, 0x00, 0xFF},
+		{0x00, 0xFF, 0x00, 0xFF},
+		{0x00, 0x00, 0xFF, 0xFF},
+		{0x00, 0x00, 0x00, 0x00},
+	}
+	r := MakeImretroReader(0x60, palette, 2, 2, make([]byte, 4))
+
+	config, err := DecodeConfig(r)
+
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+
+	if _, ok := config.ColorModel.(TwoBitColorModel); !ok {
+		t.Fatalf(`ColorModel is %T, want TwoBitColorModel`, config.ColorModel)
+	}
+
+	inputAndWant := [][2]color.Color{
+		{Black, color.RGBA{0xFF, 0x00, 0x00, 0xFF}},
+		{White, color.RGBA{0x00, 0x00, 0x00, 0x00}},
+		{DarkGray, color.RGBA{0x00, 0xFF, 0x00, 0xFF}},
+		{LightGray, color.RGBA{0x00, 0x00, 0xFF, 0xFF}},
+	}
+
+	for _, colors := range inputAndWant {
+		input := colors[0]
+		want := colors[1]
+
+		t.Logf(`Comparing conversion of %v`, input)
+		actual := config.ColorModel.Convert(input)
+		CompareColors(t, actual, want)
+	}
+}
+
 // TestDecode1BitImage tests that a 1-bit image would be properly decoded.
 func TestDecode1BitImage(t *testing.T) {
-	r := Make1Bit(0x00, [][]byte{}, 5, 2, []byte{0b10010_100, 0b01_000000})
+	r := MakeImretroReader(0x00, [][]byte{}, 5, 2, []byte{0b10010_100, 0b01_000000})
 	i, err := Decode(r)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -143,8 +218,8 @@ func TestDecode1BitImage(t *testing.T) {
 	CompareColors(t, i.At(10, 10), NoColor)
 }
 
-// Make1Bit makes a 1-bit imretro reader.
-func Make1Bit(mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
+// MakeImretroReader makes a 1-bit imretro reader.
+func MakeImretroReader(mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
 	b := bytes.NewBuffer([]byte{
 		// signature/magic bytes
 		'I', 'M', 'R', 'E', 'T', 'R', 'O',

@@ -76,6 +76,8 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	switch bitsPerPixel {
 	case OneBit:
 		model, err = decode1bitModel(r, hasPalette)
+	case TwoBit:
+		model, err = decode2bitModel(r, hasPalette)
 	default:
 		err = errors.New("Not implemented")
 	}
@@ -93,6 +95,25 @@ func decode1bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 		return nil, err
 	}
 	model := NewOneBitColorModel(ColorFromBytes(buff[:4]), ColorFromBytes(buff[4:]))
+
+	return model, nil
+}
+
+func decode2bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
+	if !hasPalette {
+		return Default2BitColorModel, nil
+	}
+
+	buff := make([]byte, 16)
+	if _, err := io.ReadFull(r, buff); err != nil {
+		return nil, err
+	}
+	model := NewTwoBitColorModel(
+		ColorFromBytes(buff[:4]),
+		ColorFromBytes(buff[4:8]),
+		ColorFromBytes(buff[8:12]),
+		ColorFromBytes(buff[12:]),
+	)
 
 	return model, nil
 }
