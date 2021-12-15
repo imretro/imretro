@@ -218,6 +218,41 @@ func TestDecode1BitImage(t *testing.T) {
 	CompareColors(t, i.At(10, 10), NoColor)
 }
 
+// TestDecode2BitImage tests that a 2-bit image would be properly decoded.
+func TestDecode2BitImage(t *testing.T) {
+	pixels := []byte{0b00011011, 0b11_100100, 0b1101_0000}
+	r := MakeImretroReader(0x40, nil, 5, 2, pixels)
+	i, err := Decode(r)
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+
+	offPoints := []image.Point{{0, 0}, {2, 1}}
+	lightPoints := []image.Point{{1, 0}, {1, 1}, {4, 1}}
+	strongPoints := []image.Point{{2, 0}, {0, 1}}
+	fullPoints := []image.Point{{3, 0}, {4, 0}, {3, 1}}
+	for _, p := range offPoints {
+		t.Logf(`Testing point %v`, p)
+		CompareColors(t, i.At(p.X, p.Y), Black)
+	}
+	for _, p := range lightPoints {
+		t.Logf(`Testing point %v`, p)
+		CompareColors(t, i.At(p.X, p.Y), DarkGray)
+	}
+	for _, p := range strongPoints {
+		t.Logf(`Testing point %v`, p)
+		CompareColors(t, i.At(p.X, p.Y), LightGray)
+	}
+	for _, p := range fullPoints {
+		t.Logf(`Testing point %v`, p)
+		CompareColors(t, i.At(p.X, p.Y), White)
+	}
+	CompareColors(t, i.At(-1, -1), NoColor)
+	CompareColors(t, i.At(5, 1), NoColor)
+	CompareColors(t, i.At(5, 2), NoColor)
+	CompareColors(t, i.At(10, 10), NoColor)
+}
+
 // MakeImretroReader makes a 1-bit imretro reader.
 func MakeImretroReader(mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
 	b := bytes.NewBuffer([]byte{
