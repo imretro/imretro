@@ -3,6 +3,8 @@ package imretro
 import (
 	"errors"
 	"image/color"
+
+	"github.com/spenserblack/go-byteutils"
 )
 
 // Palette is a palette of colors.
@@ -14,12 +16,16 @@ var ErrUnknownModel = errors.New("Color model not recognized")
 var (
 	Default1BitPalette = Palette{Black, White}
 	Default2BitPalette = Palette{Black, DarkGray, LightGray, White}
+	// Default8BitPalette has 256 possible colors, and is defined on
+	// initialization.
+	Default8BitPalette = make(Palette, 0, 256)
 )
 
 // DefaultPaletteMap maps bit modes to the appropriate default palettes.
 var DefaultPaletteMap = map[byte]Palette{
-	OneBit: Default1BitPalette,
-	TwoBit: Default2BitPalette,
+	OneBit:   Default1BitPalette,
+	TwoBit:   Default2BitPalette,
+	EightBit: Default8BitPalette,
 }
 
 var (
@@ -107,4 +113,18 @@ func (model TwoBitColorModel) Bits(c color.Color) byte {
 	}
 	// NOTE Two most significant bits of the combined colors.
 	return (r | g | b) >> 6
+}
+
+func init() {
+	for i := 0; i < 256; i++ {
+		rgba := make([]byte, 4)
+		for ci := range rgba {
+			channelIndex := byte(ci)
+			channel := byteutils.SliceR(byte(i), channelIndex*2, (channelIndex*2)+2)
+			channel |= (channel << 6) | (channel << 4) | (channel << 2)
+			rgba[ci] = channel
+		}
+		c := ColorFromBytes(rgba)
+		Default8BitPalette = append(Default8BitPalette, c)
+	}
 }
