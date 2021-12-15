@@ -12,7 +12,7 @@ import (
 // pass.
 func TestPassCheckHeader(t *testing.T) {
 	buff := make([]byte, 8)
-	r := Make1Bit(t, 0b1010_0000, nil, 0, 0, nil)
+	r := Make1Bit(0b1010_0000, nil, 0, 0, nil)
 	mode, err := checkHeader(r, buff)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -51,7 +51,7 @@ func TestFailCheckHeader(t *testing.T) {
 func TestDecode1BitNoPalette(t *testing.T) {
 	const width, height int = 320, 240
 	var pixels = make([]byte, width*height)
-	r := Make1Bit(t, 0x00, [][]byte{}, uint16(320), uint16(240), pixels)
+	r := Make1Bit(0x00, [][]byte{}, uint16(320), uint16(240), pixels)
 
 	config, err := DecodeConfig(r)
 
@@ -86,7 +86,7 @@ func TestDecode1BitPalette(t *testing.T) {
 		{0x00, 0xFF, 0x00, 0xFF},
 		{0xEF, 0xFF, 0x00, 0xFF},
 	}
-	r := Make1Bit(t, 0x20, palette, 2, 2, make([]byte, 1))
+	r := Make1Bit(0x20, palette, 2, 2, make([]byte, 1))
 
 	config, err := DecodeConfig(r)
 
@@ -115,7 +115,7 @@ func TestDecode1BitPalette(t *testing.T) {
 
 // TestDecode1BitImage tests that a 1-bit image would be properly decoded.
 func TestDecode1BitImage(t *testing.T) {
-	r := Make1Bit(t, 0x00, [][]byte{}, 5, 2, []byte{0b10010_100, 0b01_000000})
+	r := Make1Bit(0x00, [][]byte{}, 5, 2, []byte{0b10010_100, 0b01_000000})
 	i, err := Decode(r)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -127,7 +127,7 @@ func TestDecode1BitImage(t *testing.T) {
 	}
 	whitePoints := []image.Point{
 		{0, 0}, {3, 0},
-		{0, 1}, {4, 1}, 
+		{0, 1}, {4, 1},
 	}
 	for _, p := range blackPoints {
 		t.Logf(`Testing point %v`, p)
@@ -144,8 +144,7 @@ func TestDecode1BitImage(t *testing.T) {
 }
 
 // Make1Bit makes a 1-bit imretro reader.
-func Make1Bit(t *testing.T, mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
-	t.Helper()
+func Make1Bit(mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
 	b := bytes.NewBuffer([]byte{
 		// signature/magic bytes
 		'I', 'M', 'R', 'E', 'T', 'R', 'O',
