@@ -46,10 +46,11 @@ pixel will depend on the "mode" you chose. Only 1 bit for each pixel in 1-Bit mo
 
 ##### Bit Order
 
-The pixels section of the file treats the first bit as the *least significant*, and the last as the
-*most significant*, meaning that `110` is 3 (`0b0011`), not 6 (`0b0110`).
-This is used so that any unused bit can simple be a trailing `0` instead of having to
-pad `0`s in front of the last bit in the final byte.
+When multiple pixels are stored in a single byte, the bits are used from *left to right*.
+For example, if a byte in 2-bit mode contains the pixels values `1 2 3` and the remaining 2 bits are
+unused (this can happen when the number of pixels is not a multiple of 8), then the byte would be
+`01101100`. This style is used so that unused bits can simply be left as `0`, and so that the bits
+can be read from left to right.
 
 ### Modes
 

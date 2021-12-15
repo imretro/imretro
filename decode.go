@@ -26,6 +26,12 @@ type image1Bit struct {
 	pixels []byte
 }
 
+// Image2Bit is the underlying type for a 2-bit mode image.
+type image2Bit struct {
+	config image.Config
+	pixels []byte
+}
+
 // Decode decodes an image in the imretro format.
 func Decode(r io.Reader) (image.Image, error) {
 	config, err := DecodeConfig(r)
@@ -44,6 +50,8 @@ func Decode(r io.Reader) (image.Image, error) {
 	switch mode {
 	case OneBit:
 		return &image1Bit{config, pixels}, nil
+	case TwoBit:
+		return &image2Bit{config, pixels}, nil
 	}
 	return nil, errors.New("Not implemented")
 }
@@ -76,6 +84,8 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	switch bitsPerPixel {
 	case OneBit:
 		model, err = decode1bitModel(r, hasPalette)
+	case TwoBit:
+		model, err = decode2bitModel(r, hasPalette)
 	default:
 		err = errors.New("Not implemented")
 	}
@@ -93,6 +103,25 @@ func decode1bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 		return nil, err
 	}
 	model := NewOneBitColorModel(ColorFromBytes(buff[:4]), ColorFromBytes(buff[4:]))
+
+	return model, nil
+}
+
+func decode2bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
+	if !hasPalette {
+		return Default2BitColorModel, nil
+	}
+
+	buff := make([]byte, 16)
+	if _, err := io.ReadFull(r, buff); err != nil {
+		return nil, err
+	}
+	model := NewTwoBitColorModel(
+		ColorFromBytes(buff[:4]),
+		ColorFromBytes(buff[4:8]),
+		ColorFromBytes(buff[8:12]),
+		ColorFromBytes(buff[12:]),
+	)
 
 	return model, nil
 }
@@ -146,6 +175,31 @@ func (i *image1Bit) At(x, y int) color.Color {
 
 	model := i.ColorModel().(OneBitColorModel)
 	return model.colors[int(bit)]
+}
+
+// ColorModel returns the Image's color model.
+func (i *image2Bit) ColorModel() color.Model {
+	return i.config.ColorModel
+}
+
+// Bounds returns the boundaries of the image.
+func (i *image2Bit) Bounds() image.Rectangle {
+	return image.Rect(0, 0, i.config.Width, i.config.Height)
+}
+
+// At returns the color at the given pixel.
+func (i *image2Bit) At(x, y int) color.Color {
+	if !image.Pt(x, y).In(i.Bounds()) {
+		return NoColor
+	}
+	index := (y * i.config.Width) + x
+	byteIndex := index / 4
+	bitIndex := byte(index%4) * 2
+
+	bits := byteutils.SliceL(i.pixels[byteIndex], bitIndex, bitIndex+2)
+
+	model := i.ColorModel().(TwoBitColorModel)
+	return model.colors[int(bits)]
 }
 
 func init() {
