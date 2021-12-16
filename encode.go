@@ -81,8 +81,6 @@ func encodeTwoBit(w io.Writer, m image.Image) error {
 	}
 	w.Write(buffer)
 	return nil
-
-	return errors.New("Not implemented")
 }
 
 func encodeEightBit(w io.Writer, m image.Image) error {
