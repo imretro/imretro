@@ -27,6 +27,16 @@ func TestModelBitMode(t *testing.T) {
 			TwoBit, TwoBit,
 		)
 	}
+
+	if mode, err := ModelBitMode(Default8BitColorModel); err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	} else if mode != EightBit {
+		t.Errorf(
+			`mode = %v (%08b), want %v (%08b)`,
+			mode, mode,
+			EightBit, EightBit,
+		)
+	}
 }
 
 // Test2BitModelBits checks that the correct bits (ranging [0b00, 0b11]) are
@@ -50,5 +60,28 @@ func Test2BitModelBits(t *testing.T) {
 
 	if bits := model.Bits(color.Gray{0xE0}); bits != 3 {
 		t.Errorf(`bits = %02b, want 3`, bits)
+	}
+}
+
+// Test8BitModelBits checks that the correct bits (ranging [0x00, 0xFF]) are
+// returned by colors of varying brightness and opacity.
+func Test8BitModelBits(t *testing.T) {
+	model := EightBitColorModel{}
+
+	if bits := model.Bits(color.Alpha{0}); bits != 0 {
+		t.Errorf(`bits = %02b, want 0`, bits)
+	}
+	if bits := model.Bits(color.RGBA{0xFF, 0xFF, 0xFF, 0x80}); bits != 0xBF {
+		t.Errorf(`bits = %02b, want 10111111`, bits)
+	}
+
+	if bits := model.Bits(color.RGBA{0xFF, 0, 0, 0xFF}); bits != 0xC3 {
+		t.Errorf(`bits = %02b, want 11000011`, bits)
+	}
+	if bits := model.Bits(color.RGBA{0, 0xFF, 0xFF, 0xFF}); bits != 0xFC {
+		t.Errorf(`bits = %02b, want 11111100`, bits)
+	}
+	if bits := model.Bits(color.Gray{0x80}); bits != 0xEA {
+		t.Errorf(`bits = %02b, want 11101010`, bits)
 	}
 }

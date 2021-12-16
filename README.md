@@ -67,8 +67,11 @@ Black, white, and two shades of gray.
 
 #### 8-Bit Mode
 
-256 colors. Inspired by the NES, the default palette only has
-54 colors. The remaining unused colors all mapping to alpha.
-The palette can be viewed [here][NES palette].
+256 colors of varying levels of RGB and an Alpha channel. The first 64 colors are completely
+transparent, but technically have different RGB values.
 
-[NES Palette]: https://en.wikipedia.org/wiki/List_of_video_game_console_palettes#NES
+For the nth color, where n is in \[0, 256\), the RGBA values are `n & 3`, `n >> 2 & 3`,
+`n >> 4 & 3`, and `n >> 6 & 3`. In other words, if `n` is represented as a byte, then `r` is the
+smallest 2 bits, `g` is the next 2 bits, etc.
+
+![8-Bit Pallete](./assets/8-bit-palette.png "8-Bit Palette")

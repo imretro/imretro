@@ -3,6 +3,8 @@ package imretro
 import (
 	"errors"
 	"image/color"
+
+	"github.com/spenserblack/go-byteutils"
 )
 
 // Palette is a palette of colors.
@@ -14,12 +16,16 @@ var ErrUnknownModel = errors.New("Color model not recognized")
 var (
 	Default1BitPalette = Palette{Black, White}
 	Default2BitPalette = Palette{Black, DarkGray, LightGray, White}
+	// Default8BitPalette has 256 possible colors, and is defined on
+	// initialization.
+	Default8BitPalette = make8BitPalette()
 )
 
 // DefaultPaletteMap maps bit modes to the appropriate default palettes.
 var DefaultPaletteMap = map[byte]Palette{
-	OneBit: Default1BitPalette,
-	TwoBit: Default2BitPalette,
+	OneBit:   Default1BitPalette,
+	TwoBit:   Default2BitPalette,
+	EightBit: Default8BitPalette,
 }
 
 var (
@@ -44,6 +50,7 @@ var (
 var (
 	Default1BitColorModel = NewOneBitColorModel(Black, White)
 	Default2BitColorModel = NewTwoBitColorModel(Black, DarkGray, LightGray, White)
+	Default8BitColorModel = NewEightBitColorModel(Default8BitPalette)
 )
 
 // OneBitColorModel is color model for 1-bit-pixel images.
@@ -56,6 +63,11 @@ type TwoBitColorModel struct {
 	colors Palette
 }
 
+// EightBitColorModel is a color model for 8-bit-pixel images.
+type EightBitColorModel struct {
+	colors Palette
+}
+
 // ModelBitMode gets the bits-per-pixel according to the color model.
 func ModelBitMode(model color.Model) (byte, error) {
 	switch model.(type) {
@@ -63,6 +75,8 @@ func ModelBitMode(model color.Model) (byte, error) {
 		return OneBit, nil
 	case TwoBitColorModel:
 		return TwoBit, nil
+	case EightBitColorModel:
+		return EightBit, nil
 	}
 	return 0, ErrUnknownModel
 }
@@ -107,4 +121,47 @@ func (model TwoBitColorModel) Bits(c color.Color) byte {
 	}
 	// NOTE Two most significant bits of the combined colors.
 	return (r | g | b) >> 6
+}
+
+// NewEightBitColorModel creates a new color model for 8-bit-pixel images.
+func NewEightBitColorModel(colors Palette) EightBitColorModel {
+	return EightBitColorModel{colors}
+}
+
+func (model EightBitColorModel) Convert(c color.Color) color.Color {
+	index := int(model.Bits(c))
+	if index >= len(model.colors) {
+		return NoColor
+	}
+	return model.colors[index]
+}
+
+// Bits gets the eight bits that should point to the color index.
+//
+// Possible values are in range [0, 256).
+func (model EightBitColorModel) Bits(c color.Color) byte {
+	r, g, b, a := ColorAsBytes(c)
+	r = byteutils.SliceL(r, 0, 2)
+	g = byteutils.SliceL(g, 0, 2) << 2
+	b = byteutils.SliceL(b, 0, 2) << 4
+	a = byteutils.SliceL(a, 0, 2) << 6
+	return r | g | b | a
+}
+
+// Make8BitPalette creates the default 8-bit palette as described in the format
+// documentation.
+func make8BitPalette() Palette {
+	palette := make(Palette, 0, 256)
+	for i := 0; i < cap(palette); i++ {
+		rgba := make([]byte, 4)
+		for ci := range rgba {
+			channelIndex := byte(ci)
+			channel := byteutils.SliceR(byte(i), channelIndex*2, (channelIndex*2)+2)
+			channel |= (channel << 6) | (channel << 4) | (channel << 2)
+			rgba[ci] = channel
+		}
+		c := ColorFromBytes(rgba)
+		palette = append(palette, c)
+	}
+	return palette
 }
