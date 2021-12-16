@@ -7,7 +7,7 @@ An image format for retro-style images
 I made this format so that you can make your own image with a hex editor for a retro-ish
 artstyle. In the future I may need to create an editor to allow making larger images easily.
 
-:warning: This image format is *not* for ease of use, storage efficiency, or honestly anything
+:warning: This image format is *not* for color accuracy, storage efficiency, or honestly anything
 useful. I went through part of an SNES programming tutorial and was inspired by the idea of
 manually writing a sprite's data using a hex editor. If there is any useful feature, it is
 that this image format can be manually written by anyone knowledgable of binary numbers.
