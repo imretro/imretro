@@ -18,7 +18,7 @@ var (
 	Default2BitPalette = Palette{Black, DarkGray, LightGray, White}
 	// Default8BitPalette has 256 possible colors, and is defined on
 	// initialization.
-	Default8BitPalette = make(Palette, 0, 256)
+	Default8BitPalette = make8BitPalette()
 )
 
 // DefaultPaletteMap maps bit modes to the appropriate default palettes.
@@ -123,20 +123,6 @@ func (model TwoBitColorModel) Bits(c color.Color) byte {
 	return (r | g | b) >> 6
 }
 
-func init() {
-	for i := 0; i < 256; i++ {
-		rgba := make([]byte, 4)
-		for ci := range rgba {
-			channelIndex := byte(ci)
-			channel := byteutils.SliceR(byte(i), channelIndex*2, (channelIndex*2)+2)
-			channel |= (channel << 6) | (channel << 4) | (channel << 2)
-			rgba[ci] = channel
-		}
-		c := ColorFromBytes(rgba)
-		Default8BitPalette = append(Default8BitPalette, c)
-	}
-}
-
 // NewEightBitColorModel creates a new color model for 8-bit-pixel images.
 func NewEightBitColorModel(colors Palette) EightBitColorModel {
 	return EightBitColorModel{colors}
@@ -160,4 +146,22 @@ func (model EightBitColorModel) Bits(c color.Color) byte {
 	b = byteutils.SliceL(b, 0, 2) << 4
 	a = byteutils.SliceL(a, 0, 2) << 6
 	return r | g | b | a
+}
+
+// Make8BitPalette creates the default 8-bit palette as described in the format
+// documentation.
+func make8BitPalette() Palette {
+	palette := make(Palette, 0, 256)
+	for i := 0; i < cap(palette); i++ {
+		rgba := make([]byte, 4)
+		for ci := range rgba {
+			channelIndex := byte(ci)
+			channel := byteutils.SliceR(byte(i), channelIndex*2, (channelIndex*2)+2)
+			channel |= (channel << 6) | (channel << 4) | (channel << 2)
+			rgba[ci] = channel
+		}
+		c := ColorFromBytes(rgba)
+		palette = append(palette, c)
+	}
+	return palette
 }

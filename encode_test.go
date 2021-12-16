@@ -138,6 +138,45 @@ func TestEncode2BitPixels(t *testing.T) {
 	}
 }
 
+// TestEncode8BitPixels checks that the pixels have been given the proper indices
+// to the palette.
+func TestEncode8BitPixels(t *testing.T) {
+	var b bytes.Buffer
+	Encode8Bit(t, &b, 10, 5)
+
+	t.Log("skipping to pixels")
+	b.Next(12)
+	b.Next(1024)
+
+	for i := 0; i < 16/4; i++ {
+		FailByteHelper(t, &b, 0b1100_0000)
+		FailByteHelper(t, &b, 0b1111_1111)
+		FailByteHelper(t, &b, 0b1100_0011)
+		FailByteHelper(t, &b, 0)
+	}
+
+	remaining := b.Bytes()
+
+	// NOTE 50 pixels, 1 pixel per byte results in 50 bytes and 0 remainder. Subtract 16
+	// for bytes tested above.
+	if l, want := len(remaining), 34; l != want {
+		t.Fatalf(
+			`%d remaining pixel bytes (%d total pixel bytes), want %d`,
+			l, l+16,
+			want,
+		)
+	}
+
+	t.Logf(`Remaining bytes: %v`, remaining)
+
+	if final1, want := remaining[len(remaining)-2], byte(0b11001111); final1 != want {
+		t.Errorf(`almost final byte = %d (%08b), want %d (%08b)`, final1, final1, want, want)
+	}
+	if final2, want := remaining[len(remaining)-1], byte(0b10111100); final2 != want {
+		t.Errorf(`almost final byte = %d (%08b), want %d (%08b)`, final2, final2, want, want)
+	}
+}
+
 // FailDimensionHelper fails if the dimension is not the wanted value.
 func FailDimensionHelper(t *testing.T, b *bytes.Buffer, dimension, byteSignificance string, want byte) {
 	t.Helper()
@@ -208,4 +247,20 @@ func Encode2Bit(t *testing.T, b *bytes.Buffer, width, height int) {
 	m.Set(width-1, height-1, LighterGray)
 
 	Encode(b, m, TwoBit)
+}
+
+// Encode8Bit creates a 8-bit image and encodes it to a buffer.
+func Encode8Bit(t *testing.T, b *bytes.Buffer, width, height int) {
+	t.Helper()
+	colors := []color.Color{Black, White, color.RGBA{0xFF, 0, 0, 0xFF}, color.RGBA{0, 0, 0, 0}}
+
+	m := image.NewRGBA(image.Rect(0, 0, width, height))
+	for i := 0; i < 16; i++ {
+		c := colors[i%len(colors)]
+		m.Set(i%width, i/width, c)
+	}
+	m.Set(width-2, height-1, color.RGBA{0xFF, 0xFF, 0, 0xFF})
+	m.Set(width-1, height-1, color.RGBA{0, 0xFF, 0xFF, 0x80})
+
+	Encode(b, m, EightBit)
 }

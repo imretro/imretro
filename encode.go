@@ -1,7 +1,6 @@
 package imretro
 
 import (
-	"errors"
 	"image"
 	"image/color"
 	"io"
@@ -84,7 +83,17 @@ func encodeTwoBit(w io.Writer, m image.Image) error {
 }
 
 func encodeEightBit(w io.Writer, m image.Image) error {
-	return errors.New("Not implemented")
+	bounds := m.Bounds()
+	buffer := make([]byte, 0, bounds.Dx()*bounds.Dy())
+	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
+		for x := bounds.Min.X; x < bounds.Max.X; x++ {
+			c := m.At(x, y)
+			bits := Default8BitColorModel.Bits(c)
+			buffer = append(buffer, bits)
+		}
+	}
+	w.Write(buffer)
+	return nil
 }
 
 // WriteColor writes a color as 4 bytes to a Writer.
