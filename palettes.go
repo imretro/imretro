@@ -50,6 +50,7 @@ var (
 var (
 	Default1BitColorModel = NewOneBitColorModel(Black, White)
 	Default2BitColorModel = NewTwoBitColorModel(Black, DarkGray, LightGray, White)
+	Default8BitColorModel = NewEightBitColorModel(Default8BitPalette)
 )
 
 // OneBitColorModel is color model for 1-bit-pixel images.
@@ -62,6 +63,11 @@ type TwoBitColorModel struct {
 	colors Palette
 }
 
+// EightBitColorModel is a color model for 8-bit-pixel images.
+type EightBitColorModel struct {
+	colors Palette
+}
+
 // ModelBitMode gets the bits-per-pixel according to the color model.
 func ModelBitMode(model color.Model) (byte, error) {
 	switch model.(type) {
@@ -69,6 +75,8 @@ func ModelBitMode(model color.Model) (byte, error) {
 		return OneBit, nil
 	case TwoBitColorModel:
 		return TwoBit, nil
+	case EightBitColorModel:
+		return EightBit, nil
 	}
 	return 0, ErrUnknownModel
 }
@@ -127,4 +135,29 @@ func init() {
 		c := ColorFromBytes(rgba)
 		Default8BitPalette = append(Default8BitPalette, c)
 	}
+}
+
+// NewEightBitColorModel creates a new color model for 8-bit-pixel images.
+func NewEightBitColorModel(colors Palette) EightBitColorModel {
+	return EightBitColorModel{colors}
+}
+
+func (model EightBitColorModel) Convert(c color.Color) color.Color {
+	index := int(model.Bits(c))
+	if index >= len(model.colors) {
+		return NoColor
+	}
+	return model.colors[index]
+}
+
+// Bits gets the eight bits that should point to the color index.
+//
+// Possible values are in range [0, 256).
+func (model EightBitColorModel) Bits(c color.Color) byte {
+	r, g, b, a := ColorAsBytes(c)
+	r = byteutils.SliceL(r, 0, 2)
+	g = byteutils.SliceL(g, 0, 2) << 2
+	b = byteutils.SliceL(b, 0, 2) << 4
+	a = byteutils.SliceL(a, 0, 2) << 6
+	return r | g | b | a
 }
