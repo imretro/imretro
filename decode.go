@@ -20,26 +20,8 @@ const bitsPerPixelIndex byte = 6
 // decoding the imretro reader.
 type DecodeError string
 
-// Image1Bit is the underlying type for a 1-bit mode image.
-type image1Bit struct {
-	config image.Config
-	pixels []byte
-}
-
-// Image2Bit is the underlying type for a 2-bit mode image.
-type image2Bit struct {
-	config image.Config
-	pixels []byte
-}
-
-// Image8Bit is the underlying type for an 8-bit mode image.
-type image8Bit struct {
-	config image.Config
-	pixels []byte
-}
-
 // Decode decodes an image in the imretro format.
-func Decode(r io.Reader) (image.Image, error) {
+func Decode(r io.Reader) (ImretroImage, error) {
 	config, err := DecodeConfig(r)
 	if err != nil {
 		return nil, err
@@ -55,11 +37,11 @@ func Decode(r io.Reader) (image.Image, error) {
 
 	switch mode {
 	case OneBit:
-		return &image1Bit{config, pixels}, nil
+		return &image1Bit{imretroImage{config, pixels}}, nil
 	case TwoBit:
-		return &image2Bit{config, pixels}, nil
+		return &image2Bit{imretroImage{config, pixels}}, nil
 	case EightBit:
-		return &image8Bit{config, pixels}, nil
+		return &image8Bit{imretroImage{config, pixels}}, nil
 	}
 	return nil, errors.New("Not implemented")
 }
@@ -175,84 +157,13 @@ func (e DecodeError) Error() string {
 	return string(e)
 }
 
-// ColorModel returns the Image's color model.
-func (i *image1Bit) ColorModel() color.Model {
-	return i.config.ColorModel
-}
-
-// Bounds returns the boundaries of the image.
-func (i *image1Bit) Bounds() image.Rectangle {
-	return image.Rect(0, 0, i.config.Width, i.config.Height)
-}
-
-// At returns the color at the given pixel.
-func (i *image1Bit) At(x, y int) color.Color {
-	if !image.Pt(x, y).In(i.Bounds()) {
-		return NoColor
-	}
-	index := (y * i.config.Width) + x
-	byteIndex := index / 8
-	bitIndex := byte(index % 8)
-
-	if byteIndex > len(i.pixels) {
-		return NoColor
-	}
-
-	b := i.pixels[byteIndex]
-	bit := byteutils.GetL(b, bitIndex)
-
-	model := i.ColorModel().(OneBitColorModel)
-	return model.colors[int(bit)]
-}
-
-// ColorModel returns the Image's color model.
-func (i *image2Bit) ColorModel() color.Model {
-	return i.config.ColorModel
-}
-
-// Bounds returns the boundaries of the image.
-func (i *image2Bit) Bounds() image.Rectangle {
-	return image.Rect(0, 0, i.config.Width, i.config.Height)
-}
-
-// At returns the color at the given pixel.
-func (i *image2Bit) At(x, y int) color.Color {
-	if !image.Pt(x, y).In(i.Bounds()) {
-		return NoColor
-	}
-	index := (y * i.config.Width) + x
-	byteIndex := index / 4
-	bitIndex := byte(index%4) * 2
-
-	bits := byteutils.SliceL(i.pixels[byteIndex], bitIndex, bitIndex+2)
-
-	model := i.ColorModel().(TwoBitColorModel)
-	return model.colors[int(bits)]
-}
-
-// ColorModel returns the Image's color model.
-func (i *image8Bit) ColorModel() color.Model {
-	return i.config.ColorModel
-}
-
-// Bounds returns the boundaries of the image.
-func (i *image8Bit) Bounds() image.Rectangle {
-	return image.Rect(0, 0, i.config.Width, i.config.Height)
-}
-
-// At returns the color at the given pixel.
-func (i *image8Bit) At(x, y int) color.Color {
-	if !image.Pt(x, y).In(i.Bounds()) {
-		return NoColor
-	}
-
-	index := (y * i.config.Width) + x
-	pixel := i.pixels[index]
-
-	model := i.ColorModel().(EightBitColorModel)
-	return model.colors[int(pixel)]
-}
-
 func init() {
-	image.RegisterFormat("imretro", ImretroSignature, Decode, DecodeConfig)
+	image.RegisterFormat("imretro", ImretroSignature, globalDecode, DecodeConfig)
+}
+
+// GlobalDecode returns an image.Image instead of an ImretroImage so that it
+// can be registered as a format.
+func globalDecode(r io.Reader) (image.Image, error) {
+	i, err := Decode(r)
+	return i.(image.Image), err
 }
