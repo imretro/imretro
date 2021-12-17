@@ -32,6 +32,12 @@ type image2Bit struct {
 	pixels []byte
 }
 
+// Image8Bit is the underlying type for an 8-bit mode image.
+type image8Bit struct {
+	config image.Config
+	pixels []byte
+}
+
 // Decode decodes an image in the imretro format.
 func Decode(r io.Reader) (image.Image, error) {
 	config, err := DecodeConfig(r)
@@ -52,6 +58,8 @@ func Decode(r io.Reader) (image.Image, error) {
 		return &image1Bit{config, pixels}, nil
 	case TwoBit:
 		return &image2Bit{config, pixels}, nil
+	case EightBit:
+		return &image8Bit{config, pixels}, nil
 	}
 	return nil, errors.New("Not implemented")
 }
@@ -86,6 +94,8 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 		model, err = decode1bitModel(r, hasPalette)
 	case TwoBit:
 		model, err = decode2bitModel(r, hasPalette)
+	case EightBit:
+		model, err = decode8bitModel(r, hasPalette)
 	default:
 		err = errors.New("Not implemented")
 	}
@@ -124,6 +134,24 @@ func decode2bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 	)
 
 	return model, nil
+}
+
+func decode8bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
+	if !hasPalette {
+		return Default8BitColorModel, nil
+	}
+
+	colors := make(Palette, 0, 256)
+	buff := make([]byte, 4)
+
+	for i := 0; i < cap(colors); i++ {
+		if _, err := io.ReadFull(r, buff); err != nil {
+			return nil, err
+		}
+		colors = append(colors, ColorFromBytes(buff))
+	}
+
+	return NewEightBitColorModel(colors), nil
 }
 
 // CheckHeader confirms the reader is an imretro image by checking the "magic bytes",
@@ -200,6 +228,29 @@ func (i *image2Bit) At(x, y int) color.Color {
 
 	model := i.ColorModel().(TwoBitColorModel)
 	return model.colors[int(bits)]
+}
+
+// ColorModel returns the Image's color model.
+func (i *image8Bit) ColorModel() color.Model {
+	return i.config.ColorModel
+}
+
+// Bounds returns the boundaries of the image.
+func (i *image8Bit) Bounds() image.Rectangle {
+	return image.Rect(0, 0, i.config.Width, i.config.Height)
+}
+
+// At returns the color at the given pixel.
+func (i *image8Bit) At(x, y int) color.Color {
+	if !image.Pt(x, y).In(i.Bounds()) {
+		return NoColor
+	}
+
+	index := (y * i.config.Width) + x
+	pixel := i.pixels[index]
+
+	model := i.ColorModel().(EightBitColorModel)
+	return model.colors[int(pixel)]
 }
 
 func init() {
