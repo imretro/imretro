@@ -32,6 +32,12 @@ type image2Bit struct {
 	pixels []byte
 }
 
+// Image8Bit is the underlying type for an 8-bit mode image.
+type image8Bit struct {
+	config image.Config
+	pixels []byte
+}
+
 // Decode decodes an image in the imretro format.
 func Decode(r io.Reader) (image.Image, error) {
 	config, err := DecodeConfig(r)
@@ -52,6 +58,8 @@ func Decode(r io.Reader) (image.Image, error) {
 		return &image1Bit{config, pixels}, nil
 	case TwoBit:
 		return &image2Bit{config, pixels}, nil
+	case EightBit:
+		return &image8Bit{config, pixels}, nil
 	}
 	return nil, errors.New("Not implemented")
 }
@@ -220,6 +228,29 @@ func (i *image2Bit) At(x, y int) color.Color {
 
 	model := i.ColorModel().(TwoBitColorModel)
 	return model.colors[int(bits)]
+}
+
+// ColorModel returns the Image's color model.
+func (i *image8Bit) ColorModel() color.Model {
+	return i.config.ColorModel
+}
+
+// Bounds returns the boundaries of the image.
+func (i *image8Bit) Bounds() image.Rectangle {
+	return image.Rect(0, 0, i.config.Width, i.config.Height)
+}
+
+// At returns the color at the given pixel.
+func (i *image8Bit) At(x, y int) color.Color {
+	if !image.Pt(x, y).In(i.Bounds()) {
+		return NoColor
+	}
+
+	index := (y * i.config.Width) + x
+	pixel := i.pixels[index]
+
+	model := i.ColorModel().(EightBitColorModel)
+	return model.colors[int(pixel)]
 }
 
 func init() {
