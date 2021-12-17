@@ -61,9 +61,13 @@ This mode has only two colors: "off" and "on".
 The default palette is for "off" to be black and "on" to be white, like you
 might expect from a Pong console.
 
+![1-Bit Palette](./assets/1-bit-palette.png "1-Bit Palette")
+
 #### 2-Bit Mode
 
-Black, white, and two shades of gray.
+Off (black), light (dark gray), strong (light gray), and full (white).
+
+![2-Bit Palette](./assets/2-bit-palette.png "2-Bit Palette")
 
 #### 8-Bit Mode
 
