@@ -22,7 +22,7 @@ var (
 )
 
 // DefaultPaletteMap maps bit modes to the appropriate default palettes.
-var DefaultPaletteMap = map[byte]Palette{
+var DefaultPaletteMap = map[PixelMode]Palette{
 	OneBit:   Default1BitPalette,
 	TwoBit:   Default2BitPalette,
 	EightBit: Default8BitPalette,
