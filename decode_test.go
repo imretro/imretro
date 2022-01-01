@@ -356,6 +356,32 @@ func TestDecode8BitImage(t *testing.T) {
 	CompareColors(t, i.At(10, 10), NoColor)
 }
 
+// TestDecodeWithCustomModel tests that an image can be decoded and the custom
+// model(s) will be used for the image.
+func TestDecodeWithCustomModel(t *testing.T) {
+	pixels := []byte{0b0100_0000}
+	r := MakeImretroReader(0x00, nil, 2, 1, pixels)
+	off := color.Alpha{0}
+	on := color.RGBA{0, 0xFF, 0, 0xFF}
+	i, err := Decode(r, ModelMap{OneBit: NewOneBitColorModel(off, on)})
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+
+	CompareColors(t, i.At(0, 0), off)
+	CompareColors(t, i.At(1, 0), on)
+}
+
+// TestDecodeMissingModel tests that an image cannot be decoded when the model
+// is missing.
+func TestDecodeMissingModel(t *testing.T) {
+	r := MakeImretroReader(0x00, nil, 1, 1, []byte{0})
+	_, err := Decode(r, ModelMap{})
+	if want := MissingModelError(0); err != want {
+		t.Fatalf(`err = %v, want %v`, err, want)
+	}
+}
+
 // MakeImretroReader makes a 1-bit imretro reader.
 func MakeImretroReader(mode byte, palette [][]byte, width, height uint16, pixels []byte) *bytes.Buffer {
 	b := bytes.NewBuffer([]byte{

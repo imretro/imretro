@@ -2,6 +2,7 @@ package imretro
 
 import (
 	"errors"
+	"fmt"
 	"image/color"
 
 	"github.com/spenserblack/go-byteutils"
@@ -12,6 +13,15 @@ type ModelMap = map[PixelMode]color.Model
 
 // ErrUnknownModel is raised when an unknown color model is interpreted.
 var ErrUnknownModel = errors.New("Color model not recognized")
+
+// MissingModelError is raised when there is no model for the given pixel bit
+// mode.
+type MissingModelError PixelMode
+
+// Error reports the pixel mode lacking the color model.
+func (mode MissingModelError) Error() string {
+	return fmt.Sprintf("No model for pixel mode %02b", mode)
+}
 
 var (
 	Default1BitColorModel = NewOneBitColorModel(Black, White)

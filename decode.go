@@ -22,11 +22,12 @@ type DecodeError string
 
 // Decode decodes an image in the imretro format.
 //
-// Custom palettes can be passed to be used instead of the default palettes.
-// If the decoded image contains its own palette, it will be used instead of
-// the custom palette.
-func Decode(r io.Reader, customPalettes PaletteMap) (ImretroImage, error) {
-	config, err := DecodeConfig(r, customPalettes)
+// Custom color models can be used instead of the default color models. See the
+// documentation for the model types for more details. If the decoded image
+// contains an in-image palette, the model will be generated from that instead
+// of the custom value passed or the default models.
+func Decode(r io.Reader, customModels ModelMap) (ImretroImage, error) {
+	config, err := DecodeConfig(r, customModels)
 	if err != nil {
 		return nil, err
 	}
@@ -53,10 +54,14 @@ func Decode(r io.Reader, customPalettes PaletteMap) (ImretroImage, error) {
 // DecodeConfig returns the color model and dimensions of an imretro image
 // without decoding the entire image.
 //
-// Custom palettes can be used instead of the default palette.
-func DecodeConfig(r io.Reader, customPalettes PaletteMap) (image.Config, error) {
+// Custom color models can be used instead of the default model.
+func DecodeConfig(r io.Reader, customModels ModelMap) (image.Config, error) {
 	var buff []byte
 	var err error
+	modelMap := customModels
+	if modelMap == nil {
+		modelMap = DefaultModelMap
+	}
 
 	buff = make([]byte, len(ImretroSignature)+1)
 	mode, err := checkHeader(r, buff)
@@ -79,9 +84,9 @@ func DecodeConfig(r io.Reader, customPalettes PaletteMap) (image.Config, error) 
 	var model color.Model
 	if !hasPalette {
 		var ok bool
-		model, ok = DefaultModelMap[bitsPerPixel]
+		model, ok = modelMap[bitsPerPixel]
 		if !ok {
-			err = errors.New("Not implemented")
+			err = MissingModelError(bitsPerPixel)
 		}
 	} else {
 		switch bitsPerPixel {
@@ -92,7 +97,7 @@ func DecodeConfig(r io.Reader, customPalettes PaletteMap) (image.Config, error) 
 		case EightBit:
 			model, err = decode8bitModel(r)
 		default:
-			err = errors.New("Not implemented")
+			err = MissingModelError(bitsPerPixel)
 		}
 	}
 
