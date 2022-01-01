@@ -21,8 +21,12 @@ const bitsPerPixelIndex byte = 6
 type DecodeError string
 
 // Decode decodes an image in the imretro format.
-func Decode(r io.Reader) (ImretroImage, error) {
-	config, err := DecodeConfig(r)
+//
+// Custom palettes can be passed to be used instead of the default palettes.
+// If the decoded image contains its own palette, it will be used instead of
+// the custom palette.
+func Decode(r io.Reader, customPalettes PaletteMap) (ImretroImage, error) {
+	config, err := DecodeConfig(r, customPalettes)
 	if err != nil {
 		return nil, err
 	}
@@ -48,7 +52,9 @@ func Decode(r io.Reader) (ImretroImage, error) {
 
 // DecodeConfig returns the color model and dimensions of an imretro image
 // without decoding the entire image.
-func DecodeConfig(r io.Reader) (image.Config, error) {
+//
+// Custom palettes can be used instead of the default palette.
+func DecodeConfig(r io.Reader, customPalettes PaletteMap) (image.Config, error) {
 	var buff []byte
 	var err error
 
@@ -158,12 +164,19 @@ func (e DecodeError) Error() string {
 }
 
 func init() {
-	image.RegisterFormat("imretro", ImretroSignature, globalDecode, DecodeConfig)
+	image.RegisterFormat("imretro", ImretroSignature, globalDecode, globalDecodeConfig)
 }
 
 // GlobalDecode returns an image.Image instead of an ImretroImage so that it
 // can be registered as a format.
 func globalDecode(r io.Reader) (image.Image, error) {
-	i, err := Decode(r)
+	i, err := Decode(r, nil)
 	return i.(image.Image), err
+}
+
+// GlobalDecodeConfig has the proper function type to be registered as a
+// format.
+func globalDecodeConfig(r io.Reader) (image.Config, error) {
+	c, err := DecodeConfig(r, nil)
+	return c, err
 }

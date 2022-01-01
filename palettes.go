@@ -10,6 +10,9 @@ import (
 // Palette is a palette of colors.
 type Palette = color.Palette
 
+// PaletteMap maps pixel modes to palettes.
+type PaletteMap = map[PixelMode]Palette
+
 // ErrUnknownModel is raised when an unknown color model is interpreted.
 var ErrUnknownModel = errors.New("Color model not recognized")
 
@@ -22,7 +25,7 @@ var (
 )
 
 // DefaultPaletteMap maps bit modes to the appropriate default palettes.
-var DefaultPaletteMap = map[PixelMode]Palette{
+var DefaultPaletteMap = PaletteMap{
 	OneBit:   Default1BitPalette,
 	TwoBit:   Default2BitPalette,
 	EightBit: Default8BitPalette,
