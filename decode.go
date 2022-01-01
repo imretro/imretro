@@ -77,25 +77,29 @@ func DecodeConfig(r io.Reader, customPalettes PaletteMap) (image.Config, error) 
 	height := byteutils.ToUint16(buff[2:4], byteutils.LittleEndian)
 
 	var model color.Model
-	switch bitsPerPixel {
-	case OneBit:
-		model, err = decode1bitModel(r, hasPalette)
-	case TwoBit:
-		model, err = decode2bitModel(r, hasPalette)
-	case EightBit:
-		model, err = decode8bitModel(r, hasPalette)
-	default:
-		err = errors.New("Not implemented")
+	if !hasPalette {
+		var ok bool
+		model, ok = DefaultModelMap[bitsPerPixel]
+		if !ok {
+			err = errors.New("Not implemented")
+		}
+	} else {
+		switch bitsPerPixel {
+		case OneBit:
+			model, err = decode1bitModel(r)
+		case TwoBit:
+			model, err = decode2bitModel(r)
+		case EightBit:
+			model, err = decode8bitModel(r)
+		default:
+			err = errors.New("Not implemented")
+		}
 	}
 
 	return image.Config{model, int(width), int(height)}, err
 }
 
-func decode1bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
-	if !hasPalette {
-		return Default1BitColorModel, nil
-	}
-
+func decode1bitModel(r io.Reader) (color.Model, error) {
 	buff := make([]byte, 8)
 	if _, err := io.ReadFull(r, buff); err != nil {
 		return nil, err
@@ -105,11 +109,7 @@ func decode1bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 	return model, nil
 }
 
-func decode2bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
-	if !hasPalette {
-		return Default2BitColorModel, nil
-	}
-
+func decode2bitModel(r io.Reader) (color.Model, error) {
 	buff := make([]byte, 16)
 	if _, err := io.ReadFull(r, buff); err != nil {
 		return nil, err
@@ -124,11 +124,7 @@ func decode2bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 	return model, nil
 }
 
-func decode8bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
-	if !hasPalette {
-		return Default8BitColorModel, nil
-	}
-
+func decode8bitModel(r io.Reader) (color.Model, error) {
 	colors := make(Palette, 0, 256)
 	buff := make([]byte, 4)
 
