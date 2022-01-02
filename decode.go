@@ -21,8 +21,13 @@ const bitsPerPixelIndex byte = 6
 type DecodeError string
 
 // Decode decodes an image in the imretro format.
-func Decode(r io.Reader) (ImretroImage, error) {
-	config, err := DecodeConfig(r)
+//
+// Custom color models can be used instead of the default color models. See the
+// documentation for the model types for more details. If the decoded image
+// contains an in-image palette, the model will be generated from that instead
+// of the custom value passed or the default models.
+func Decode(r io.Reader, customModels ModelMap) (ImretroImage, error) {
+	config, err := DecodeConfig(r, customModels)
 	if err != nil {
 		return nil, err
 	}
@@ -48,9 +53,15 @@ func Decode(r io.Reader) (ImretroImage, error) {
 
 // DecodeConfig returns the color model and dimensions of an imretro image
 // without decoding the entire image.
-func DecodeConfig(r io.Reader) (image.Config, error) {
+//
+// Custom color models can be used instead of the default model.
+func DecodeConfig(r io.Reader, customModels ModelMap) (image.Config, error) {
 	var buff []byte
 	var err error
+	modelMap := customModels
+	if modelMap == nil {
+		modelMap = DefaultModelMap
+	}
 
 	buff = make([]byte, len(ImretroSignature)+1)
 	mode, err := checkHeader(r, buff)
@@ -71,25 +82,29 @@ func DecodeConfig(r io.Reader) (image.Config, error) {
 	height := byteutils.ToUint16(buff[2:4], byteutils.LittleEndian)
 
 	var model color.Model
-	switch bitsPerPixel {
-	case OneBit:
-		model, err = decode1bitModel(r, hasPalette)
-	case TwoBit:
-		model, err = decode2bitModel(r, hasPalette)
-	case EightBit:
-		model, err = decode8bitModel(r, hasPalette)
-	default:
-		err = errors.New("Not implemented")
+	if !hasPalette {
+		var ok bool
+		model, ok = modelMap[bitsPerPixel]
+		if !ok {
+			err = MissingModelError(bitsPerPixel)
+		}
+	} else {
+		switch bitsPerPixel {
+		case OneBit:
+			model, err = decode1bitModel(r)
+		case TwoBit:
+			model, err = decode2bitModel(r)
+		case EightBit:
+			model, err = decode8bitModel(r)
+		default:
+			err = MissingModelError(bitsPerPixel)
+		}
 	}
 
 	return image.Config{model, int(width), int(height)}, err
 }
 
-func decode1bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
-	if !hasPalette {
-		return Default1BitColorModel, nil
-	}
-
+func decode1bitModel(r io.Reader) (color.Model, error) {
 	buff := make([]byte, 8)
 	if _, err := io.ReadFull(r, buff); err != nil {
 		return nil, err
@@ -99,11 +114,7 @@ func decode1bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 	return model, nil
 }
 
-func decode2bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
-	if !hasPalette {
-		return Default2BitColorModel, nil
-	}
-
+func decode2bitModel(r io.Reader) (color.Model, error) {
 	buff := make([]byte, 16)
 	if _, err := io.ReadFull(r, buff); err != nil {
 		return nil, err
@@ -118,11 +129,7 @@ func decode2bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
 	return model, nil
 }
 
-func decode8bitModel(r io.Reader, hasPalette bool) (color.Model, error) {
-	if !hasPalette {
-		return Default8BitColorModel, nil
-	}
-
+func decode8bitModel(r io.Reader) (color.Model, error) {
 	colors := make(Palette, 0, 256)
 	buff := make([]byte, 4)
 
@@ -158,12 +165,19 @@ func (e DecodeError) Error() string {
 }
 
 func init() {
-	image.RegisterFormat("imretro", ImretroSignature, globalDecode, DecodeConfig)
+	image.RegisterFormat("imretro", ImretroSignature, globalDecode, globalDecodeConfig)
 }
 
 // GlobalDecode returns an image.Image instead of an ImretroImage so that it
 // can be registered as a format.
 func globalDecode(r io.Reader) (image.Image, error) {
-	i, err := Decode(r)
+	i, err := Decode(r, nil)
 	return i.(image.Image), err
+}
+
+// GlobalDecodeConfig has the proper function type to be registered as a
+// format.
+func globalDecodeConfig(r io.Reader) (image.Config, error) {
+	c, err := DecodeConfig(r, nil)
+	return c, err
 }

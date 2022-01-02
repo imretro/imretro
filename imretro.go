@@ -9,8 +9,11 @@ import (
 	"github.com/spenserblack/go-byteutils"
 )
 
+// PixelMode is the type for managing the number of bits per pixel.
+type PixelMode = byte
+
 const (
-	OneBit byte = iota << 6
+	OneBit PixelMode = iota << 6
 	TwoBit
 	EightBit
 )
@@ -37,8 +40,8 @@ type DimensionsTooLargeError int
 
 // IsBitCountSupported checks if the bit count is supported by the imretro
 // format.
-func IsBitCountSupported(count byte) bool {
-	for _, bits := range []byte{OneBit, TwoBit, EightBit} {
+func IsBitCountSupported(count PixelMode) bool {
+	for _, bits := range []PixelMode{OneBit, TwoBit, EightBit} {
 		if count == bits {
 			return true
 		}

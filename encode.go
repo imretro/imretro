@@ -9,7 +9,7 @@ import (
 )
 
 // Encode writes the image m to w in imretro format.
-func Encode(w io.Writer, m image.Image, pixelMode byte) error {
+func Encode(w io.Writer, m image.Image, pixelMode PixelMode) error {
 	w.Write([]byte("IMRETRO"))
 	w.Write([]byte{pixelMode | WithPalette})
 

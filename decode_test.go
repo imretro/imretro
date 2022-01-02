@@ -53,7 +53,7 @@ func TestDecode1BitNoPalette(t *testing.T) {
 	var pixels = make([]byte, width*height)
 	r := MakeImretroReader(0x00, [][]byte{}, uint16(320), uint16(240), pixels)
 
-	config, err := DecodeConfig(r)
+	config, err := DecodeConfig(r, nil)
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -86,7 +86,7 @@ func TestDecode2BitNoPalette(t *testing.T) {
 	var pixels = make([]byte, width*height)
 	r := MakeImretroReader(0x40, [][]byte{}, uint16(320), uint16(240), pixels)
 
-	config, err := DecodeConfig(r)
+	config, err := DecodeConfig(r, nil)
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -124,7 +124,7 @@ func TestDecode8BitNoPalette(t *testing.T) {
 	var pixels = make([]byte, width*height)
 	r := MakeImretroReader(0x80, [][]byte{}, uint16(320), uint16(240), pixels)
 
-	config, err := DecodeConfig(r)
+	config, err := DecodeConfig(r, nil)
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -162,7 +162,7 @@ func TestDecode1BitPalette(t *testing.T) {
 	}
 	r := MakeImretroReader(0x20, palette, 2, 2, make([]byte, 1))
 
-	config, err := DecodeConfig(r)
+	config, err := DecodeConfig(r, nil)
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -197,7 +197,7 @@ func TestDecode2BitPalette(t *testing.T) {
 	}
 	r := MakeImretroReader(0x60, palette, 2, 2, make([]byte, 4))
 
-	config, err := DecodeConfig(r)
+	config, err := DecodeConfig(r, nil)
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -237,7 +237,7 @@ func TestDecode8BitPalette(t *testing.T) {
 
 	r := MakeImretroReader(0xA0, reversedPalette, 2, 2, make([]byte, 4))
 
-	config, err := DecodeConfig(r)
+	config, err := DecodeConfig(r, nil)
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
@@ -265,7 +265,7 @@ func TestDecode8BitPalette(t *testing.T) {
 // TestDecode1BitImage tests that a 1-bit image would be properly decoded.
 func TestDecode1BitImage(t *testing.T) {
 	r := MakeImretroReader(0x00, [][]byte{}, 5, 2, []byte{0b10010_100, 0b01_000000})
-	i, err := Decode(r)
+	i, err := Decode(r, nil)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
 	}
@@ -296,7 +296,7 @@ func TestDecode1BitImage(t *testing.T) {
 func TestDecode2BitImage(t *testing.T) {
 	pixels := []byte{0b00011011, 0b11_100100, 0b1101_0000}
 	r := MakeImretroReader(0x40, nil, 5, 2, pixels)
-	i, err := Decode(r)
+	i, err := Decode(r, nil)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
 	}
@@ -334,7 +334,7 @@ func TestDecode8BitImage(t *testing.T) {
 		0xF0, 0xCF, 0xF3, 0xFC, 0xAA, // blue, yellow, magenta, cyan, 75% light gray
 	}
 	r := MakeImretroReader(0x80, nil, 5, 2, pixels)
-	i, err := Decode(r)
+	i, err := Decode(r, nil)
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
 	}
@@ -354,6 +354,32 @@ func TestDecode8BitImage(t *testing.T) {
 	CompareColors(t, i.At(5, 1), NoColor)
 	CompareColors(t, i.At(5, 2), NoColor)
 	CompareColors(t, i.At(10, 10), NoColor)
+}
+
+// TestDecodeWithCustomModel tests that an image can be decoded and the custom
+// model(s) will be used for the image.
+func TestDecodeWithCustomModel(t *testing.T) {
+	pixels := []byte{0b0100_0000}
+	r := MakeImretroReader(0x00, nil, 2, 1, pixels)
+	off := color.Alpha{0}
+	on := color.RGBA{0, 0xFF, 0, 0xFF}
+	i, err := Decode(r, ModelMap{OneBit: NewOneBitColorModel(off, on)})
+	if err != nil {
+		t.Fatalf(`err = %v, want nil`, err)
+	}
+
+	CompareColors(t, i.At(0, 0), off)
+	CompareColors(t, i.At(1, 0), on)
+}
+
+// TestDecodeMissingModel tests that an image cannot be decoded when the model
+// is missing.
+func TestDecodeMissingModel(t *testing.T) {
+	r := MakeImretroReader(0x00, nil, 1, 1, []byte{0})
+	_, err := Decode(r, ModelMap{})
+	if want := MissingModelError(0); err != want {
+		t.Fatalf(`err = %v, want %v`, err, want)
+	}
 }
 
 // MakeImretroReader makes a 1-bit imretro reader.
