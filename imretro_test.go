@@ -1,6 +1,7 @@
 package imretro
 
 import (
+	"image"
 	"image/color"
 	"testing"
 )
@@ -37,5 +38,29 @@ func TestColorAsBytes(t *testing.T) {
 	}
 	if _, _, _, a := ColorAsBytes(invisible); a != 0 {
 		t.Fatalf(`a = %d, want 0`, a)
+	}
+}
+
+// TestImagePixelMode tests that an image returns the correct pixel mode.
+func TestImagePixelMode(t *testing.T) {
+	i := imretroImage{}
+	tests := []*struct {
+		colorCount int
+		want       PixelMode
+	}{
+		{2, OneBit},
+		{4, TwoBit},
+		{256, EightBit},
+	}
+	for _, test := range tests {
+		i.config = image.Config{ColorModel: make(ColorModel, test.colorCount)}
+		if mode := i.PixelMode(); mode != test.want {
+			t.Errorf(
+				`pixel mode for %d colors = %08b, want %08b`,
+				test.colorCount,
+				mode,
+				test.want,
+			)
+		}
 	}
 }
