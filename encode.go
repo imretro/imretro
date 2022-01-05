@@ -23,7 +23,7 @@ func Encode(w io.Writer, m image.Image, pixelMode PixelMode) error {
 		w.Write(byteutils.BytesFromUint16(uint16(d), byteutils.LittleEndian))
 	}
 
-	writePalette(w, DefaultPaletteMap[pixelMode])
+	writePalette(w, DefaultModelMap[pixelMode].(ColorModel))
 
 	switch pixelMode {
 	case OneBit:
@@ -105,7 +105,7 @@ func writeColor(w io.Writer, c color.Color) error {
 
 // WritePalette writes all the colors of the palette, where each color is 4
 // bytes, to a Writer.
-func writePalette(w io.Writer, p Palette) error {
+func writePalette(w io.Writer, p ColorModel) error {
 	for _, c := range p {
 		if err := writeColor(w, c); err != nil {
 			return err

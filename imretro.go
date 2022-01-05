@@ -82,7 +82,7 @@ func ChannelAsByte(channel uint32) byte {
 type ImretroImage interface {
 	image.PalettedImage
 	// Palette gets the palette of the image.
-	Palette() Palette
+	Palette() color.Palette
 	// PixelMode returns the pixel mode of the image.
 	PixelMode() PixelMode
 	// BitsPerPixel returns the number of bits used for each pixel.
@@ -144,6 +144,6 @@ func (i imretroImage) At(x, y int) color.Color {
 }
 
 // Palette returns the color model as a palette for the image.
-func (i imretroImage) Palette() Palette {
-	return Palette(i.ColorModel().(ColorModel))
+func (i imretroImage) Palette() color.Palette {
+	return color.Palette(i.ColorModel().(ColorModel))
 }

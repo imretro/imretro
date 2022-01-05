@@ -211,9 +211,9 @@ func TestDecode2BitPalette(t *testing.T) {
 func TestDecode8BitPalette(t *testing.T) {
 	reversedPalette := make([][]byte, 0, 256)
 
-	last := len(Default8BitPalette) - 1
-	for i := range Default8BitPalette {
-		c := Default8BitPalette[last-i]
+	last := len(Default8BitColorModel) - 1
+	for i := range Default8BitColorModel {
+		c := Default8BitColorModel[last-i]
 		r, g, b, a := ColorAsBytes(c)
 		reversedPalette = append(reversedPalette, []byte{r, g, b, a})
 	}

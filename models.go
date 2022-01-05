@@ -26,7 +26,7 @@ func (mode MissingModelError) Error() string {
 var (
 	Default1BitColorModel = NewOneBitColorModel(Black, White)
 	Default2BitColorModel = NewTwoBitColorModel(Black, DarkGray, LightGray, White)
-	Default8BitColorModel = ColorModel(Default8BitPalette)
+	Default8BitColorModel = make(ColorModel, 256)
 )
 
 // DefaultModelMap maps bit modes to the default color models.
@@ -37,7 +37,7 @@ var DefaultModelMap = ModelMap{
 }
 
 // ColorModel is color model for imretro images.
-type ColorModel Palette
+type ColorModel color.Palette
 
 // PixelMode gets the bits-per-pixel according to the color model.
 func (model ColorModel) PixelMode() PixelMode {
@@ -93,4 +93,19 @@ func (model ColorModel) Convert(c color.Color) color.Color {
 		return NoColor
 	}
 	return model[index]
+}
+
+func init() {
+	// NOTE Sets the colors for the default 8-bit color model.
+	for i := range Default8BitColorModel {
+		rgba := make([]byte, 4)
+		for ci := range rgba {
+			channelIndex := byte(ci)
+			channel := byteutils.SliceR(byte(i), channelIndex*2, (channelIndex*2)+2)
+			channel |= (channel << 6) | (channel << 4) | (channel << 2)
+			rgba[ci] = channel
+		}
+		c := ColorFromBytes(rgba)
+		Default8BitColorModel[i] = c
+	}
 }
