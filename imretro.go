@@ -80,10 +80,7 @@ func ChannelAsByte(channel uint32) byte {
 
 // ImretroImage is an image decoded from the imretro format.
 type ImretroImage interface {
-	image.Image
-	// ColorIndex converts the x/y coordinates of a pixel to the index in the
-	// palette.
-	ColorIndex(x, y int) int
+	image.PalettedImage
 	// Palette gets the palette of the image.
 	Palette() Palette
 }
@@ -119,15 +116,15 @@ type image8Bit struct {
 	imretroImage
 }
 
-// ColorIndex converts the x/y coordinates of a pixel to the index in the
+// ColorIndexAt converts the x/y coordinates of a pixel to the index in the
 // palette.
-func (i *image1Bit) ColorIndex(x, y int) int {
+func (i *image1Bit) ColorIndexAt(x, y int) uint8 {
 	index := (y * i.config.Width) + x
 	byteIndex := index / 8
 	bitIndex := byte(index % 8)
 	b := i.pixels[byteIndex]
 	bit := byteutils.GetL(b, bitIndex)
-	return int(bit)
+	return uint8(bit)
 }
 
 // Palette gets the 1-bit image palette.
@@ -141,17 +138,17 @@ func (i *image1Bit) At(x, y int) color.Color {
 		return NoColor
 	}
 	palette := i.Palette()
-	return palette[i.ColorIndex(x, y)]
+	return palette[i.ColorIndexAt(x, y)]
 }
 
-// ColorIndex converts the x/y coordinates of a pixel to the index in the
+// ColorIndexAt converts the x/y coordinates of a pixel to the index in the
 // palette.
-func (i *image2Bit) ColorIndex(x, y int) int {
+func (i *image2Bit) ColorIndexAt(x, y int) uint8 {
 	index := (y * i.config.Width) + x
 	byteIndex := index / 4
 	bitIndex := byte(index%4) * 2
 	bits := byteutils.SliceL(i.pixels[byteIndex], bitIndex, bitIndex+2)
-	return int(bits)
+	return uint8(bits)
 }
 
 // Palette gets the 2-bit image palette.
@@ -165,15 +162,15 @@ func (i *image2Bit) At(x, y int) color.Color {
 		return NoColor
 	}
 	palette := i.Palette()
-	return palette[i.ColorIndex(x, y)]
+	return palette[i.ColorIndexAt(x, y)]
 }
 
-// ColorIndex converts the x/y coordinates of a pixel to the index in the
+// ColorIndexAt converts the x/y coordinates of a pixel to the index in the
 // palette.
-func (i *image8Bit) ColorIndex(x, y int) int {
+func (i *image8Bit) ColorIndexAt(x, y int) uint8 {
 	index := (y * i.config.Width) + x
 	pixel := i.pixels[index]
-	return int(pixel)
+	return uint8(pixel)
 }
 
 // Palette gets the 8-bit image palette.
@@ -187,5 +184,5 @@ func (i *image8Bit) At(x, y int) color.Color {
 		return NoColor
 	}
 	palette := i.Palette()
-	return palette[i.ColorIndex(x, y)]
+	return palette[i.ColorIndexAt(x, y)]
 }
