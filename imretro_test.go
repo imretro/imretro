@@ -64,3 +64,16 @@ func TestImagePixelMode(t *testing.T) {
 		}
 	}
 }
+
+// TestImagePalette tests that the image returns its color model as a palette.
+func TestImagePalette(t *testing.T) {
+	i := imretroImage{}
+	i.config = image.Config{ColorModel: Default8BitColorModel}
+	var palette color.Palette = i.Palette()
+
+	for i := range palette {
+		actual := palette[i]
+		want := Default8BitColorModel[i]
+		CompareColors(t, actual, want)
+	}
+}
