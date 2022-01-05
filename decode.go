@@ -1,7 +1,6 @@
 package imretro
 
 import (
-	"errors"
 	"image"
 	"image/color"
 	"io"
@@ -31,24 +30,12 @@ func Decode(r io.Reader, customModels ModelMap) (ImretroImage, error) {
 	if err != nil {
 		return nil, err
 	}
-	mode, err := ModelBitMode(config.ColorModel)
-	if err != nil {
-		return nil, err
-	}
 	pixels, err := io.ReadAll(r)
 	if err != nil {
 		return nil, err
 	}
 
-	switch mode {
-	case OneBit:
-		return &image1Bit{imretroImage{config, pixels}}, nil
-	case TwoBit:
-		return &image2Bit{imretroImage{config, pixels}}, nil
-	case EightBit:
-		return &image8Bit{imretroImage{config, pixels}}, nil
-	}
-	return nil, errors.New("Not implemented")
+	return imretroImage{config, pixels}, nil
 }
 
 // DecodeConfig returns the color model and dimensions of an imretro image
@@ -130,7 +117,7 @@ func decode2bitModel(r io.Reader) (color.Model, error) {
 }
 
 func decode8bitModel(r io.Reader) (color.Model, error) {
-	colors := make(Palette, 0, 256)
+	colors := make(ColorModel, 0, 256)
 	buff := make([]byte, 4)
 
 	for i := 0; i < cap(colors); i++ {
@@ -140,7 +127,7 @@ func decode8bitModel(r io.Reader) (color.Model, error) {
 		colors = append(colors, ColorFromBytes(buff))
 	}
 
-	return NewEightBitColorModel(colors), nil
+	return colors, nil
 }
 
 // CheckHeader confirms the reader is an imretro image by checking the "magic bytes",

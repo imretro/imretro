@@ -50,7 +50,7 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 			}
 			c := m.At(x, y)
 			// NOTE If at least 1 color is bright and not transparent, it is bright
-			bit := Default1BitColorModel.Bit(c)
+			bit := byte(Default1BitColorModel.Index(c))
 			byteutils.ChangeL(&buffer[len(buffer)-1], bitIndex, bit)
 			bitIndex++
 		}
@@ -72,7 +72,7 @@ func encodeTwoBit(w io.Writer, m image.Image) error {
 				buffer = append(buffer, 0)
 			}
 			c := m.At(x, y)
-			bits := Default2BitColorModel.Bits(c)
+			bits := byte(Default2BitColorModel.Index(c))
 			buffer[len(buffer)-1] |= bits << (6 - bitIndex)
 			// NOTE Each index is 2 bits
 			bitIndex += 2
@@ -88,7 +88,7 @@ func encodeEightBit(w io.Writer, m image.Image) error {
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c := m.At(x, y)
-			bits := Default8BitColorModel.Bits(c)
+			bits := byte(Default8BitColorModel.Index(c))
 			buffer = append(buffer, bits)
 		}
 	}
