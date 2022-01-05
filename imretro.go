@@ -80,18 +80,35 @@ func ChannelAsByte(channel uint32) byte {
 
 // ImretroImage is an image decoded from the imretro format.
 type ImretroImage interface {
-	image.Image
-	// ColorIndex converts the x/y coordinates of a pixel to the index in the
-	// palette.
-	ColorIndex(x, y int) int
+	image.PalettedImage
 	// Palette gets the palette of the image.
-	Palette() Palette
+	Palette() color.Palette
+	// PixelMode returns the pixel mode of the image.
+	PixelMode() PixelMode
+	// BitsPerPixel returns the number of bits used for each pixel.
+	BitsPerPixel() int
 }
 
 // ImretroImage is the helper struct for imretro images.
 type imretroImage struct {
 	config image.Config
 	pixels []byte
+}
+
+// PixelMode returns the pixel mode.
+func (i imretroImage) PixelMode() PixelMode {
+	return i.ColorModel().(ColorModel).PixelMode()
+}
+
+// BitsPerPixel returns the number of bits used for each pixel.
+func (i imretroImage) BitsPerPixel() int {
+	switch i.ColorModel().(ColorModel).PixelMode() {
+	case OneBit:
+		return 1
+	case TwoBit:
+		return 2
+	}
+	return 8
 }
 
 // ColorModel returns the Image's color model.
@@ -104,88 +121,29 @@ func (i imretroImage) Bounds() image.Rectangle {
 	return image.Rect(0, 0, i.config.Width, i.config.Height)
 }
 
-// Image1Bit is the 1-bit image type.
-type image1Bit struct {
-	imretroImage
-}
-
-// Image2Bit is the 2-bit image type.
-type image2Bit struct {
-	imretroImage
-}
-
-// Image8Bit is the 8-bit image type.
-type image8Bit struct {
-	imretroImage
-}
-
-// ColorIndex converts the x/y coordinates of a pixel to the index in the
+// ColorIndexAt converts the x/y coordinates of a pixel to the index in the
 // palette.
-func (i *image1Bit) ColorIndex(x, y int) int {
+func (i imretroImage) ColorIndexAt(x, y int) uint8 {
 	index := (y * i.config.Width) + x
-	byteIndex := index / 8
-	bitIndex := byte(index % 8)
+	bitsPerPixel := i.BitsPerPixel()
+	offset := index * bitsPerPixel
+	byteIndex := offset / 8
+	bitIndex := byte(offset % 8)
 	b := i.pixels[byteIndex]
-	bit := byteutils.GetL(b, bitIndex)
-	return int(bit)
-}
-
-// Palette gets the 1-bit image palette.
-func (i *image1Bit) Palette() Palette {
-	return i.ColorModel().(OneBitColorModel).colors
+	bit := byteutils.SliceL(b, bitIndex, bitIndex+byte(bitsPerPixel))
+	return uint8(bit)
 }
 
 // At returns the color at the given pixel.
-func (i *image1Bit) At(x, y int) color.Color {
+func (i imretroImage) At(x, y int) color.Color {
 	if !image.Pt(x, y).In(i.Bounds()) {
 		return NoColor
 	}
-	palette := i.Palette()
-	return palette[i.ColorIndex(x, y)]
+	model := i.ColorModel().(ColorModel)
+	return model[i.ColorIndexAt(x, y)]
 }
 
-// ColorIndex converts the x/y coordinates of a pixel to the index in the
-// palette.
-func (i *image2Bit) ColorIndex(x, y int) int {
-	index := (y * i.config.Width) + x
-	byteIndex := index / 4
-	bitIndex := byte(index%4) * 2
-	bits := byteutils.SliceL(i.pixels[byteIndex], bitIndex, bitIndex+2)
-	return int(bits)
-}
-
-// Palette gets the 2-bit image palette.
-func (i *image2Bit) Palette() Palette {
-	return i.ColorModel().(TwoBitColorModel).colors
-}
-
-// At returns the color at the given pixel.
-func (i *image2Bit) At(x, y int) color.Color {
-	if !image.Pt(x, y).In(i.Bounds()) {
-		return NoColor
-	}
-	palette := i.Palette()
-	return palette[i.ColorIndex(x, y)]
-}
-
-// ColorIndex converts the x/y coordinates of a pixel to the index in the
-// palette.
-func (i *image8Bit) ColorIndex(x, y int) int {
-	index := (y * i.config.Width) + x
-	pixel := i.pixels[index]
-	return int(pixel)
-}
-
-// Palette gets the 8-bit image palette.
-func (i *image8Bit) Palette() Palette {
-	return i.ColorModel().(EightBitColorModel).colors
-}
-
-// At returns the color at the given pixel.
-func (i *image8Bit) At(x, y int) color.Color {
-	if !image.Pt(x, y).In(i.Bounds()) {
-		return NoColor
-	}
-	palette := i.Palette()
-	return palette[i.ColorIndex(x, y)]
+// Palette returns the color model as a palette for the image.
+func (i imretroImage) Palette() color.Palette {
+	return color.Palette(i.ColorModel().(ColorModel))
 }

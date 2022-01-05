@@ -64,9 +64,6 @@ func TestDecode1BitNoPalette(t *testing.T) {
 	if config.Height != height {
 		t.Errorf(`Height = %v, want %v`, config.Height, height)
 	}
-	if _, ok := config.ColorModel.(OneBitColorModel); !ok {
-		t.Fatalf(`ColorModel is %T, want OneBitColorModel`, config.ColorModel)
-	}
 
 	inputAndWant := [][2]color.Color{{DarkGray, Black}, {LightGray, White}}
 
@@ -96,9 +93,6 @@ func TestDecode2BitNoPalette(t *testing.T) {
 	}
 	if config.Height != height {
 		t.Errorf(`Height = %v, want %v`, config.Height, height)
-	}
-	if _, ok := config.ColorModel.(TwoBitColorModel); !ok {
-		t.Fatalf(`ColorModel is %T, want TwoBitColorModel`, config.ColorModel)
 	}
 
 	inputAndWant := [][2]color.Color{
@@ -135,9 +129,6 @@ func TestDecode8BitNoPalette(t *testing.T) {
 	if config.Height != height {
 		t.Errorf(`Height = %v, want %v`, config.Height, height)
 	}
-	if _, ok := config.ColorModel.(EightBitColorModel); !ok {
-		t.Fatalf(`ColorModel is %T, want EightBitColorModel`, config.ColorModel)
-	}
 
 	inputAndWant := [][2]color.Color{
 		{color.Gray{0x0F}, Black},
@@ -166,10 +157,6 @@ func TestDecode1BitPalette(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
-	}
-
-	if _, ok := config.ColorModel.(OneBitColorModel); !ok {
-		t.Fatalf(`ColorModel is %T, want OneBitColorModel`, config.ColorModel)
 	}
 
 	inputAndWant := [][2]color.Color{
@@ -203,10 +190,6 @@ func TestDecode2BitPalette(t *testing.T) {
 		t.Fatalf(`err = %v, want nil`, err)
 	}
 
-	if _, ok := config.ColorModel.(TwoBitColorModel); !ok {
-		t.Fatalf(`ColorModel is %T, want TwoBitColorModel`, config.ColorModel)
-	}
-
 	inputAndWant := [][2]color.Color{
 		{Black, color.RGBA{0xFF, 0x00, 0x00, 0xFF}},
 		{White, color.RGBA{0x00, 0x00, 0x00, 0x00}},
@@ -228,9 +211,9 @@ func TestDecode2BitPalette(t *testing.T) {
 func TestDecode8BitPalette(t *testing.T) {
 	reversedPalette := make([][]byte, 0, 256)
 
-	last := len(Default8BitPalette) - 1
-	for i := range Default8BitPalette {
-		c := Default8BitPalette[last-i]
+	last := len(Default8BitColorModel) - 1
+	for i := range Default8BitColorModel {
+		c := Default8BitColorModel[last-i]
 		r, g, b, a := ColorAsBytes(c)
 		reversedPalette = append(reversedPalette, []byte{r, g, b, a})
 	}
@@ -241,10 +224,6 @@ func TestDecode8BitPalette(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf(`err = %v, want nil`, err)
-	}
-
-	if _, ok := config.ColorModel.(EightBitColorModel); !ok {
-		t.Fatalf(`ColorModel is %T, want EightBitColorModel`, config.ColorModel)
 	}
 
 	inputAndWant := [][2]color.Color{
@@ -397,33 +376,4 @@ func MakeImretroReader(mode byte, palette [][]byte, width, height uint16, pixels
 	}
 	b.Write(pixels)
 	return b
-}
-
-// CompareColors helps compare colors to each other.
-func CompareColors(t *testing.T, actual, want color.Color) {
-	t.Helper()
-	r, g, b, a := actual.RGBA()
-	wr, wg, wb, wa := want.RGBA()
-	comparisons := [4]channelComparison{
-		{"red", r, wr},
-		{"green", g, wg},
-		{"blue", b, wb},
-		{"alpha", a, wa},
-	}
-
-	for _, comparison := range comparisons {
-		if comparison.actual != comparison.want {
-			t.Errorf(
-				`%s channel = %v, want %v`,
-				comparison.name, comparison.actual,
-				comparison.want,
-			)
-		}
-	}
-}
-
-// ChannelComparison is used to compare color channels.
-type channelComparison struct {
-	name         string
-	actual, want uint32
 }

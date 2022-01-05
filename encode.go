@@ -23,7 +23,7 @@ func Encode(w io.Writer, m image.Image, pixelMode PixelMode) error {
 		w.Write(byteutils.BytesFromUint16(uint16(d), byteutils.LittleEndian))
 	}
 
-	writePalette(w, DefaultPaletteMap[pixelMode])
+	writePalette(w, DefaultModelMap[pixelMode].(ColorModel))
 
 	switch pixelMode {
 	case OneBit:
@@ -50,7 +50,7 @@ func encodeOneBit(w io.Writer, m image.Image) error {
 			}
 			c := m.At(x, y)
 			// NOTE If at least 1 color is bright and not transparent, it is bright
-			bit := Default1BitColorModel.Bit(c)
+			bit := byte(Default1BitColorModel.Index(c))
 			byteutils.ChangeL(&buffer[len(buffer)-1], bitIndex, bit)
 			bitIndex++
 		}
@@ -72,7 +72,7 @@ func encodeTwoBit(w io.Writer, m image.Image) error {
 				buffer = append(buffer, 0)
 			}
 			c := m.At(x, y)
-			bits := Default2BitColorModel.Bits(c)
+			bits := byte(Default2BitColorModel.Index(c))
 			buffer[len(buffer)-1] |= bits << (6 - bitIndex)
 			// NOTE Each index is 2 bits
 			bitIndex += 2
@@ -88,7 +88,7 @@ func encodeEightBit(w io.Writer, m image.Image) error {
 	for y := bounds.Min.Y; y < bounds.Max.Y; y++ {
 		for x := bounds.Min.X; x < bounds.Max.X; x++ {
 			c := m.At(x, y)
-			bits := Default8BitColorModel.Bits(c)
+			bits := byte(Default8BitColorModel.Index(c))
 			buffer = append(buffer, bits)
 		}
 	}
@@ -105,7 +105,7 @@ func writeColor(w io.Writer, c color.Color) error {
 
 // WritePalette writes all the colors of the palette, where each color is 4
 // bytes, to a Writer.
-func writePalette(w io.Writer, p Palette) error {
+func writePalette(w io.Writer, p ColorModel) error {
 	for _, c := range p {
 		if err := writeColor(w, c); err != nil {
 			return err
