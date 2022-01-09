@@ -57,7 +57,10 @@ can be read from left to right.
 
 #### 1-Bit Mode
 
-This mode has only two colors: "off" and "on".
+This mode has only two colors: off and on.
+
+##### Default
+
 The default palette is for "off" to be black and "on" to be white, like you
 might expect from a Pong console.
 
@@ -65,17 +68,21 @@ might expect from a Pong console.
 
 #### 2-Bit Mode
 
-Off (black), light (dark gray), strong (light gray), and full (white).
+This mode has four colors: off, light, strong, and full.
+
+##### Default
 
 ![2-Bit Palette](./assets/2-bit-palette.png "2-Bit Palette")
 
 #### 8-Bit Mode
 
-256 colors of varying levels of RGB and an Alpha channel. The first 64 colors are completely
-transparent, but technically have different RGB values.
+256 colors.
+
+##### Default
 
 For the nth color, where n is in \[0, 256\), the RGBA values are `n & 3`, `n >> 2 & 3`,
 `n >> 4 & 3`, and `n >> 6 & 3`. In other words, if `n` is represented as a byte, then `r` is the
 smallest 2 bits, `g` is the next 2 bits, etc.
+The first 64 colors are completely transparent, but technically have different RGB values.
 
 ![8-Bit Pallete](./assets/8-bit-palette.png "8-Bit Palette")
