@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Prints the default 8-bit palette
+Generates the default 1, 2, and 8-bit palettes as PNG files.
 """
 from PIL import Image, ImageDraw
 
