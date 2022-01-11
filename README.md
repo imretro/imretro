@@ -83,8 +83,8 @@ For the nth color, where n is in \[0, 256\), the RGBA values are `n & 3`, `n >> 
 smallest 2 bits, `g` is the next 2 bits, etc.
 The first 64 colors are completely transparent, but technically have different RGB values.
 
+![8-Bit Pallete](./assets/8-bit-palette.png "8-Bit Palette")
+
 ## Implementations
 
 - [Go](https://github.com/imretro/go)
-
-![8-Bit Pallete](./assets/8-bit-palette.png "8-Bit Palette")
