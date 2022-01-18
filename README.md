@@ -24,10 +24,11 @@ The next two bits map to the "modes" that declare the bits-per-pixel. `00` for 1
 declare that the file contains a palette. When no palette is present in the file, this means that
 the file decoder should choose its own default palette. The next 5 bits are unused.
 
-Following that are 32 bits for the dimensions: 16 for width and 16 for height. The reason for this limited
-range of dimensions is to be faithful to the retro-ish goal of this format.
+Following that are 24 bits for the dimensions: 12 for width and 12 for height. The reason for this limited
+range of dimensions is to be faithful to the retro-ish goal of this format. In fact, the maximum dimensions
+are fairly large, but with the goal of supporting at least 480p.
 
-This results in 12 bytes for the header.
+This results in 11 bytes for the header.
 
 #### Palette (Optional)
 
