@@ -17,12 +17,30 @@ that this image format can easily be manually written by anyone knowledgable of 
 #### Header
 
 Each file should start with a header to provide some information about the image.
-The first 7 *bytes* are `"IMRETRO"` (for a total of 56 bits). This is the file signature.
 
-The next two bits map to the "modes" that declare the bits-per-pixel. `00` for 1-bit, `01` for
-2-bit, and `10` for 8-bit. After is a single bit for palette usage: `0` for no palette, `1` to
-declare that the file contains a palette. When no palette is present in the file, this means that
-the file decoder should choose its own default palette. The next 5 bits are unused.
+##### Signature
+
+The first 7 bytes are `"IMRETRO"`. This is the file signature.
+
+##### Mode Byte
+
+The next byte is used for flags for enabled/disabled features used by the decoder.
+
+The first two bits declare the bits-per-pixel of the image. `00` for 1-bit, `01` for
+2-bit, and `10` for 8-bit.
+
+Next is a single bit for palette usage: `0` for no palette, `1` to declare that
+the file contains a palette. When no palette is present in the file, this means that
+the file decoder should choose its own default palette.
+
+The following 4 bits are unused. They are reserved for potential future features.
+
+The eighth bit is a flag for color accuracy for the [in-file palette][palette].
+`0` for 2 bits per color channel, `1` for 8 bits (a byte) per color
+channel. The decoder should ignore this flag if the in-file palette flag is not
+set.
+
+#### Dimensions
 
 Following that are 24 bits for the dimensions: 12 for width and 12 for height. The reason for this limited
 range of dimensions is to be faithful to the retro-ish goal of this format. In fact, the maximum dimensions
@@ -89,3 +107,5 @@ The first 64 colors are completely transparent, but technically have different R
 ## Implementations
 
 - [Go](https://github.com/imretro/go)
+
+[palette]: #palette-optional
