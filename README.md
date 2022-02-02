@@ -33,7 +33,12 @@ Next is a single bit for palette usage: `0` for no palette, `1` to declare that
 the file contains a palette. When no palette is present in the file, this means that
 the file decoder should choose its own default palette.
 
-The following 4 bits are unused. They are reserved for potential future features.
+The following 2 bits are unused. They are reserved for potential future features.
+
+The sixth and seventh bits are a flag for how many channels each color in the
+in-file palette will have. `00` for grayscale (1 channel), `01` for RGB (3
+channels), and `10` for RGBA (4 channels). The decoder should ignore this flag
+if the in-file palette flag is not set.
 
 The eighth bit is a flag for color accuracy for the [in-file palette][palette].
 `0` for 2 bits per color channel, `1` for 8 bits (a byte) per color
