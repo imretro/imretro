@@ -57,9 +57,8 @@ This results in 11 bytes for the header.
 
 The palette will declare the possible colors in the image. The number of colors in your
 palette depend on the number of bits you chose to use in your header. In 1-Bit mode, you
-will declare 2 colors, in 2-Bit mode, 4 colors, etc. Each color in the palette will be 4 bytes:
-RGB and an alpha value. So, in 8-Bit mode, with 256 possible colors, the palette will be 1024
-bytes.
+will declare 2 colors, in 2-Bit mode, 4 colors, and in 8-bit mode you will declare 256
+colors.
 
 #### Pixels
 
