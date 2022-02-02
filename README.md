@@ -60,6 +60,19 @@ palette depend on the number of bits you chose to use in your header. In 1-Bit m
 will declare 2 colors, in 2-Bit mode, 4 colors, and in 8-bit mode you will declare 256
 colors.
 
+##### Note on Byte Count
+
+The bits used to declare the palette depends on the color channel and color accuracy flags
+in the modes.
+
+For example, in 8-bit mode with 4 color channels and the color accuracy flag
+set (8 bits per channel), the palette would be 8192 bits, or 1024 bytes.
+
+Conversely, in 1-bit mode with 1 color channel and the color accuracy flag
+unset (2 bits per channel), only 4 bits would need to be written. Note that this
+is less than a full byte. The last byte of the palette should be 0-filled (e.g.
+`1011` are the colors in `10110000`).
+
 #### Pixels
 
 After the header comes the actual declaration of the pixels. The number of bits used in each
