@@ -33,7 +33,12 @@ Next is a single bit for palette usage: `0` for no palette, `1` to declare that
 the file contains a palette. When no palette is present in the file, this means that
 the file decoder should choose its own default palette.
 
-The following 4 bits are unused. They are reserved for potential future features.
+The following 2 bits are unused. They are reserved for potential future features.
+
+The sixth and seventh bits are a flag for how many channels each color in the
+in-file palette will have. `00` for grayscale (1 channel), `01` for RGB (3
+channels), and `10` for RGBA (4 channels). The decoder should ignore this flag
+if the in-file palette flag is not set.
 
 The eighth bit is a flag for color accuracy for the [in-file palette][palette].
 `0` for 2 bits per color channel, `1` for 8 bits (a byte) per color
@@ -52,9 +57,21 @@ This results in 11 bytes for the header.
 
 The palette will declare the possible colors in the image. The number of colors in your
 palette depend on the number of bits you chose to use in your header. In 1-Bit mode, you
-will declare 2 colors, in 2-Bit mode, 4 colors, etc. Each color in the palette will be 4 bytes:
-RGB and an alpha value. So, in 8-Bit mode, with 256 possible colors, the palette will be 1024
-bytes.
+will declare 2 colors, in 2-Bit mode, 4 colors, and in 8-bit mode you will declare 256
+colors.
+
+##### Note on Byte Count
+
+The bits used to declare the palette depends on the color channel and color accuracy flags
+in the modes.
+
+For example, in 8-bit mode with 4 color channels and the color accuracy flag
+set (8 bits per channel), the palette would be 8192 bits, or 1024 bytes.
+
+Conversely, in 1-bit mode with 1 color channel and the color accuracy flag
+unset (2 bits per channel), only 4 bits would need to be written. Note that this
+is less than a full byte. The last byte of the palette should be 0-filled (e.g.
+`1011` are the colors in `10110000`).
 
 #### Pixels
 
