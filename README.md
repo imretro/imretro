@@ -124,5 +124,6 @@ The first 64 colors are completely transparent, but technically have different R
 ## Implementations
 
 - [Go](https://github.com/imretro/go)
+- [TypeScript (WIP)](https://github.com/imretro/ts)
 
 [palette]: #palette-optional
